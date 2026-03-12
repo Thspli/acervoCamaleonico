@@ -7,15 +7,12 @@ import { useSystemContext } from "@/contexts/SystemContext";
 import { getSystemById, getSystemSteps } from "@/data/systems";
 import { DynamicForm } from "@/components/forms/DynamicForm";
 
-// ——— Linha de passos Dinâmica ———
+// ——— Linha de Passos Dinâmica ———
 function StepBar({ current, steps }: { current: number; steps: Array<{ id: string; label: string; order: number }> }) {
   const sortedSteps = [...steps].sort((a, b) => a.order - b.order);
 
   return (
-    <div style={{
-      display: "flex", alignItems: "center", justifyContent: "center",
-      padding: "28px 0 36px",
-    }}>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "28px 0 36px" }}>
       {sortedSteps.map((step, i) => {
         const done   = step.order < current;
         const active = step.order === current;
@@ -67,46 +64,268 @@ function StepBar({ current, steps }: { current: number; steps: Array<{ id: strin
   );
 }
 
+// ——— Card de passo de sistema selecionado ———
+function SystemInfoCard({ name }: { name: string }) {
+  return (
+    <div style={{
+      background: "rgba(0,10,5,0.6)",
+      border: "1px solid rgba(0,122,81,0.18)",
+      borderRadius: "6px",
+      padding: "32px 36px",
+      textAlign: "center",
+      backdropFilter: "blur(8px)",
+    }}>
+      <p style={{ fontSize: "11px", color: "#007A51", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "10px" }}>
+        Sistema selecionado
+      </p>
+      <p style={{ fontSize: "22px", fontWeight: 700, color: "#81c784", marginBottom: "12px" }}>
+        {name}
+      </p>
+      <p style={{ fontSize: "13px", color: "#4a7a5a", lineHeight: 1.6 }}>
+        Avance para começar a preencher os dados do personagem.
+      </p>
+    </div>
+  );
+}
+
+// ——— Layout do formulário com seções visuais ———
+function FormLayout({
+  step,
+  stepData,
+  onDataChange,
+}: {
+  step: ReturnType<typeof getSystemSteps>[0];
+  stepData: Record<string, any>;
+  onDataChange: (fieldId: string, value: any) => void;
+}) {
+  // Para o passo "character-basics", agrupa campos em seções
+  if (step.id === "character-basics") {
+    const identityFields = step.fields.filter(f =>
+      ["character-name", "player-name", "nivel"].includes(f.id)
+    );
+    const resourceFields = step.fields.filter(f =>
+      ["recompensa", "dinheiro"].includes(f.id)
+    );
+    const narrativeFields = step.fields.filter(f =>
+      ["tormento"].includes(f.id)
+    );
+    const reputacaoField = step.fields.filter(f =>
+      ["reputacao"].includes(f.id)
+    );
+
+    const inputStyle: React.CSSProperties = {
+      width: "100%",
+      padding: "11px 14px",
+      background: "rgba(0,15,8,0.85)",
+      border: "1px solid rgba(0,122,81,0.25)",
+      borderRadius: "3px",
+      color: "#c8e6c9",
+      fontSize: "13px",
+      fontFamily: "var(--font-museo), sans-serif",
+      transition: "border-color 0.2s",
+      boxSizing: "border-box" as const,
+      outline: "none",
+    };
+
+    const sectionTitle = (label: string) => (
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "10px",
+        marginBottom: "20px",
+        marginTop: "4px",
+      }}>
+        <span style={{
+          fontSize: "9px",
+          fontWeight: 700,
+          color: "#007A51",
+          letterSpacing: "0.18em",
+          textTransform: "uppercase",
+          fontFamily: "var(--font-museo), sans-serif",
+        }}>
+          {label}
+        </span>
+        <div style={{ flex: 1, height: "1px", background: "rgba(0,122,81,0.15)" }} />
+      </div>
+    );
+
+    return (
+      <div style={{
+        background: "rgba(0,10,5,0.6)",
+        border: "1px solid rgba(0,122,81,0.18)",
+        borderRadius: "6px",
+        padding: "32px 36px",
+        backdropFilter: "blur(8px)",
+        display: "flex",
+        flexDirection: "column",
+        gap: "8px",
+      }}>
+        {step.description && (
+          <p style={{ fontSize: "13px", color: "#4a7a5a", lineHeight: 1.6, marginBottom: "16px" }}>
+            {step.description}
+          </p>
+        )}
+
+        {/* Identidade — grid 2 cols para nome/jogador, nível menor */}
+        {identityFields.length > 0 && (
+          <div>
+            {sectionTitle("Identidade")}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px 20px" }}>
+              {identityFields.map((field) => (
+                <DynamicFormField
+                  key={field.id}
+                  field={field}
+                  value={stepData[field.id] ?? ""}
+                  onChange={(v) => onDataChange(field.id, v)}
+                  inputStyle={inputStyle}
+                  // Nível ocupa coluna menor; aqui deixamos a grid decidir
+                  style={field.id === "nivel" ? { gridColumn: "span 1" } : {}}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Recursos — grid 2 cols */}
+        {resourceFields.length > 0 && (
+          <div style={{ marginTop: "12px" }}>
+            {sectionTitle("Recursos")}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px 20px" }}>
+              {resourceFields.map((field) => (
+                <DynamicFormField
+                  key={field.id}
+                  field={field}
+                  value={stepData[field.id] ?? ""}
+                  onChange={(v) => onDataChange(field.id, v)}
+                  inputStyle={inputStyle}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Narrativa — full width */}
+        {narrativeFields.length > 0 && (
+          <div style={{ marginTop: "12px" }}>
+            {sectionTitle("Narrativa")}
+            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              {narrativeFields.map((field) => (
+                <DynamicFormField
+                  key={field.id}
+                  field={field}
+                  value={stepData[field.id] ?? ""}
+                  onChange={(v) => onDataChange(field.id, v)}
+                  inputStyle={inputStyle}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Reputação — full width com destaque */}
+        {reputacaoField.length > 0 && (
+          <div style={{ marginTop: "12px" }}>
+            {sectionTitle("Reputação")}
+            <div style={{
+              padding: "20px",
+              background: "rgba(0,122,81,0.04)",
+              border: "1px solid rgba(0,122,81,0.12)",
+              borderRadius: "4px",
+            }}>
+              {reputacaoField.map((field) => (
+                <DynamicFormField
+                  key={field.id}
+                  field={field}
+                  value={stepData[field.id] ?? ""}
+                  onChange={(v) => onDataChange(field.id, v)}
+                  inputStyle={inputStyle}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Para outros passos, usa o DynamicForm padrão
+  return (
+    <div style={{
+      background: "rgba(0,10,5,0.6)",
+      border: "1px solid rgba(0,122,81,0.18)",
+      borderRadius: "6px",
+      padding: "32px 36px",
+      backdropFilter: "blur(8px)",
+    }}>
+      <DynamicForm
+        step={step}
+        initialData={stepData}
+        onDataChange={onDataChange}
+      />
+    </div>
+  );
+}
+
+// ——— Campo individual inline (evita reimportar DynamicField; usa lógica local simples) ———
+import { DynamicField } from "@/components/forms/DynamicField";
+import { AttributesStep } from "@/components/forms/AttributesStep";
+import { AntecedentesStep } from "@/components/forms/AntecedentesStep";
+import { HabilidadesStep } from "@/components/forms/HabilidadesStep";
+
+
+function DynamicFormField({
+  field,
+  value,
+  onChange,
+  inputStyle,
+  style,
+}: {
+  field: ReturnType<typeof getSystemSteps>[0]["fields"][0];
+  value: any;
+  onChange: (v: any) => void;
+  inputStyle: React.CSSProperties;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <div style={style}>
+      <DynamicField
+        field={field}
+        value={value}
+        onChange={onChange}
+        baseInput={inputStyle}
+      />
+    </div>
+  );
+}
+
 // ——— Página ———
 export default function PersonagemPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const sistemId = searchParams.get("sistema");
 
-  const { selectedSystem, characterData, updateCharacterData, getCharacterDataByStep } = useSystemContext();
+  const { selectedSystem, updateCharacterData, getCharacterDataByStep } = useSystemContext();
 
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
 
-  // Garantir que o sistema foi selecionado via contexto
   const system = selectedSystem || (sistemId ? getSystemById(sistemId) : null);
 
   if (!system) {
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          background: "#0a0a0a",
-          color: "#c8e6c9",
-          fontFamily: "var(--font-museo), sans-serif",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
+      <div style={{
+        minHeight: "100vh", background: "#0a0a0a", color: "#c8e6c9",
+        fontFamily: "var(--font-museo), sans-serif",
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }}>
         <div style={{ textAlign: "center" }}>
           <h1 style={{ color: "#e8f5e9", marginBottom: "12px" }}>Sistema não encontrado</h1>
           <p style={{ color: "#4a7a5a", marginBottom: "20px" }}>Volte e selecione um sistema válido.</p>
           <button
             onClick={() => router.push("/fichas/nova")}
             style={{
-              padding: "11px 22px",
-              background: "#007A51",
-              border: "none",
-              color: "#e8f5e9",
-              borderRadius: "3px",
-              cursor: "pointer",
-              fontSize: "13px",
-              fontFamily: "var(--font-museo), sans-serif",
+              padding: "11px 22px", background: "#007A51", border: "none",
+              color: "#e8f5e9", borderRadius: "3px", cursor: "pointer",
+              fontSize: "13px", fontFamily: "var(--font-museo), sans-serif",
             }}
           >
             Voltar para seleção de sistema
@@ -116,18 +335,13 @@ export default function PersonagemPage() {
     );
   }
 
-  // obtém todos os passos definidos pelo sistema. não filtramos nada aqui
-  // para que o StepBar continue mostrando o primeiro passo e a numeração
-  // não salte quando avançarmos.
   const steps = getSystemSteps(system.id);
   const currentStep = steps[currentStepIndex];
 
-  if (!currentStep) {
-    return null;
-  }
+  if (!currentStep) return null;
 
-  const canAdvance = currentStep.fields.length === 0 || 
-    currentStep.fields.every(field => {
+  const canAdvance = currentStep.fields.length === 0 ||
+    currentStep.fields.every((field) => {
       if (!field.required) return true;
       const value = getCharacterDataByStep(currentStep.id)[field.id];
       return value !== "" && value !== undefined && value !== null;
@@ -136,8 +350,7 @@ export default function PersonagemPage() {
   const handleNext = () => {
     if (canAdvance && currentStepIndex < steps.length - 1) {
       setCurrentStepIndex(currentStepIndex + 1);
-    } else if (canAdvance && currentStepIndex === steps.length - 1) {
-      // Última etapa - redirecionar para revisão ou salvar
+    } else if (canAdvance) {
       router.push(`/fichas/nova/revisao?sistema=${system.id}`);
     }
   };
@@ -159,7 +372,6 @@ export default function PersonagemPage() {
       overflowX: "hidden", position: "relative",
       display: "flex", flexDirection: "column",
     }}>
-      {/* Fundo */}
       <div style={{
         position: "fixed", inset: 0,
         backgroundImage: `radial-gradient(ellipse at 20% 30%, rgba(0,122,81,0.06) 0%, transparent 55%),
@@ -175,8 +387,11 @@ export default function PersonagemPage() {
 
       <Header />
 
-      <main style={{ flex: 1, position: "relative", zIndex: 1, maxWidth: "760px", margin: "0 auto", width: "100%", padding: "0 48px 80px" }}>
-
+      <main style={{
+        flex: 1, position: "relative", zIndex: 1,
+        maxWidth: "780px", margin: "0 auto", width: "100%",
+        padding: "0 48px 80px",
+      }}>
         <StepBar current={currentStep.order} steps={steps} />
 
         {/* Título */}
@@ -188,64 +403,50 @@ export default function PersonagemPage() {
             {currentStep.label}
           </h2>
           <p style={{ fontSize: "14px", color: "#4a7a5a", lineHeight: 1.6 }}>
-            Preenchendo ficha de <span style={{ color: "#81c784" }}>{system.name}</span>
+            Preenchendo ficha de{" "}
+            <span style={{ color: "#81c784" }}>{system.name}</span>
           </p>
         </div>
 
-        {/* Formulário Dinâmico ou conteúdo especial para passos vazios */}
+        {/* Conteúdo */}
         {currentStep.id === "system-info" ? (
-          <div
-            style={{
-              background: "rgba(0,10,5,0.6)",
-              border: "1px solid rgba(0,122,81,0.18)",
-              borderRadius: "6px",
-              padding: "32px 36px",
-              textAlign: "center",
-              backdropFilter: "blur(8px)",
-            }}
-          >
-            <p style={{ fontSize: "16px", color: "#e8f5e9", marginBottom: "8px" }}>
-              Sistema selecionado:
-            </p>
-            <p style={{ fontSize: "20px", fontWeight: 700, color: "#81c784" }}>
-              {system.name}
-            </p>
-            <p style={{ fontSize: "14px", color: "#4a7a5a", marginTop: "12px" }}>
-              Você pode avançar para começar a preencher os dados do personagem.
-            </p>
-          </div>
+          <SystemInfoCard name={system.name} />
+        ) : currentStep.id === "attributes" ? (
+          <AttributesStep
+            values={stepData as Record<string, number>}
+            onChange={(fieldId, value) => updateCharacterData(currentStep.id, fieldId, value)}
+          />
+        ) : currentStep.id === "antecedentes" ? (
+          <AntecedentesStep
+            values={stepData as Record<string, number>}
+            onChange={(fieldId, value) => updateCharacterData(currentStep.id, fieldId, value)}
+            intelecto={(getCharacterDataByStep("attributes")["intelecto"] as number) ?? 0}
+          />
+        ) : currentStep.id === "habilidades" ? (
+          <HabilidadesStep
+            selected={(stepData["escolhidas"] as string[]) ?? []}
+            onChange={(ids) => updateCharacterData(currentStep.id, "escolhidas", ids)}
+          />
+        ) : currentStep.id === "habilidades" ? (
+          <HabilidadesStep
+            selected={(stepData["selected"] as string[]) ?? []}
+            onChange={(sel) => updateCharacterData(currentStep.id, "selected", sel as any)}
+          />
         ) : currentStep.fields.length > 0 ? (
-          <div
-            style={{
-              background: "rgba(0,10,5,0.6)",
-              border: "1px solid rgba(0,122,81,0.18)",
-              borderRadius: "6px",
-              padding: "32px 36px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "24px",
-              backdropFilter: "blur(8px)",
-            }}
-          >
-            <DynamicForm
-              step={currentStep}
-              initialData={stepData}
-              onDataChange={(fieldId, value) => {
-                updateCharacterData(currentStep.id, fieldId, value);
-              }}
-            />
-          </div>
+          <FormLayout
+            step={currentStep}
+            stepData={stepData}
+            onDataChange={(fieldId, value) => updateCharacterData(currentStep.id, fieldId, value)}
+          />
         ) : (
-          <div
-            style={{
-              background: "rgba(0,10,5,0.6)",
-              border: "1px solid rgba(0,122,81,0.18)",
-              borderRadius: "6px",
-              padding: "32px 36px",
-              textAlign: "center",
-              backdropFilter: "blur(8px)",
-            }}
-          >
+          <div style={{
+            background: "rgba(0,10,5,0.6)",
+            border: "1px solid rgba(0,122,81,0.18)",
+            borderRadius: "6px",
+            padding: "32px 36px",
+            textAlign: "center",
+            backdropFilter: "blur(8px)",
+          }}>
             <p style={{ fontSize: "14px", color: "#4a7a5a", lineHeight: 1.6 }}>
               Revise suas informações antes de finalizar a criação.
             </p>
@@ -302,7 +503,6 @@ export default function PersonagemPage() {
             </svg>
           </button>
         </div>
-
       </main>
     </div>
   );

@@ -1,16 +1,12 @@
 import { SystemConfig } from "@/types/systems";
 
-/**
- * Configuração do sistema "Som das Seis"
- * Exemplo de como estruturar um novo sistema
- */
 export const somDasSeis: SystemConfig = {
   id: "som-das-seis",
   name: "Som das Seis",
   description: "Revolvers, duelos e justiça nas ruas poeirentas do velho oeste.",
   cover: "/somdaseis.jpg",
   tag: "",
-  
+
   steps: [
     {
       id: "system-info",
@@ -92,75 +88,78 @@ export const somDasSeis: SystemConfig = {
       id: "attributes",
       order: 3,
       label: "Atributos",
-      description: "Defina os atributos do seu personagem",
+      description: "Distribua pontos entre os atributos do seu personagem",
       fields: [
         {
-          id: "strength",
-          label: "Força",
+          id: "fisico",
+          label: "Físico",
           type: "number",
-          description: "Poder físico e capacidade de dano",
+          description: "+1d6 de Vida por ponto",
           required: true,
-          defaultValue: 10,
-          validation: { min: 1, max: 20 },
+          defaultValue: 0,
+          validation: { min: 0, max: 10 },
         },
         {
-          id: "dexterity",
-          label: "Destreza",
+          id: "agilidade",
+          label: "Agilidade",
           type: "number",
-          description: "Agilidade e precisão",
+          description: "+1 Ação por ponto",
           required: true,
-          defaultValue: 10,
-          validation: { min: 1, max: 20 },
+          defaultValue: 0,
+          validation: { min: 0, max: 10 },
         },
         {
-          id: "constitution",
-          label: "Constituição",
+          id: "intelecto",
+          label: "Intelecto",
           type: "number",
-          description: "Resistência e saúde",
+          description: "+1 Ponto de Antecedente por ponto",
           required: true,
-          defaultValue: 10,
-          validation: { min: 1, max: 20 },
+          defaultValue: 0,
+          validation: { min: 0, max: 10 },
         },
         {
-          id: "intelligence",
-          label: "Inteligência",
+          id: "coragem",
+          label: "Coragem",
           type: "number",
-          description: "Raciocínio lógico e conhecimento",
+          description: "+1 em Iniciativa por ponto",
           required: true,
-          defaultValue: 10,
-          validation: { min: 1, max: 20 },
-        },
-        {
-          id: "wisdom",
-          label: "Sabedoria",
-          type: "number",
-          description: "Percepção e intuição",
-          required: true,
-          defaultValue: 10,
-          validation: { min: 1, max: 20 },
-        },
-        {
-          id: "charisma",
-          label: "Carisma",
-          type: "number",
-          description: "Persuasão e presença",
-          required: true,
-          defaultValue: 10,
-          validation: { min: 1, max: 20 },
+          defaultValue: 0,
+          validation: { min: 0, max: 10 },
         },
       ],
     },
     {
-      id: "review",
+      id: "habilidades",
       order: 4,
+      label: "Habilidades",
+      description: "Escolha 2 habilidades para o seu personagem",
+      fields: [],
+    },
+    {
+      id: "antecedentes",
+      order: 5,
+      label: "Antecedentes",
+      description: "Distribua pontos nos antecedentes do seu personagem",
+      fields: [],
+    },
+    {
+      id: "habilidades",
+      order: 6,
+      label: "Habilidades",
+      description: "Escolha duas habilidades para o seu personagem",
+      fields: [],
+    },
+    {
+      id: "review",
+      order: 7,
       label: "Revisão",
       description: "Revise suas escolhas antes de finalizar",
-      fields: [], // Este passo é apenas para revisão, sem campos
+      fields: [],
     },
   ],
 
-  attributes: ["Força", "Destreza", "Constituição", "Inteligência", "Sabedoria", "Carisma"],
-  
+  attributes: ["Físico", "Agilidade", "Intelecto", "Coragem"],
+
   skills: [
     "Acrobacia",
     "Arcanismo",
