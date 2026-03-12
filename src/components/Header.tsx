@@ -21,9 +21,17 @@ export default function Header() {
           borderBottom: "2px solid #007A51",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        <a
+          href="/"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            textDecoration: "none",
+          }}
+        >
           <img
-            src="/Camalogonico.png"
+            src="/2.png"
             alt="Logo Acervo Camaleônico"
             style={{ width: 38, height: 38, objectFit: "contain" }}
           />
@@ -32,13 +40,16 @@ export default function Header() {
               fontSize: "18px",
               fontWeight: 700,
               letterSpacing: "0.04em",
-              color: "#e8f5e9",
+              color: "#007A51",
               fontFamily: "var(--font-museo), sans-serif",
+              transition: "color 0.2s",
             }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "#00955f")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "#007A51")}
           >
             Acervo Camaleônico
           </span>
-        </div>
+        </a>
         <NavLinks />
       </nav>
 

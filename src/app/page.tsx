@@ -1,5 +1,7 @@
 import Header from "../components/Header";
+import { Carousel } from "../components/Carousel";
 import { HeroButtons } from "../components/HeroButtons";
+import { Footer } from "../components/Footer";
 
 export default function Home() {
   return (
@@ -10,6 +12,7 @@ export default function Home() {
         color: "#c8e6c9",
         fontFamily: "var(--font-museo), sans-serif",
         overflowX: "hidden",
+        position: "relative",
       }}
     >
       <div
@@ -23,53 +26,39 @@ export default function Home() {
         }}
       />
 
+      {/* Imagem de fundo apenas na seção principal */}
+      <div
+        style={{
+          position: "absolute",
+          top: "68px",
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundImage: "url('/fundo.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          opacity: 0.06,
+          pointerEvents: "none",
+          zIndex: 0,
+        }}
+      />
+
       <Header />
 
       <section
         style={{
           position: "relative",
           zIndex: 1,
-          maxWidth: "1100px",
+          maxWidth: "1400px",
           margin: "0 auto",
-          padding: "80px 48px 100px",
+          padding: "80px 48px 100px 48px",
           display: "flex",
-          alignItems: "center",
-          gap: "64px",
+          alignItems: "stretch",
+          justifyContent: "center",
+          gap: "80px",
         }}
       >
-        <div
-          style={{
-            flexShrink: 0,
-            width: "380px",
-            height: "280px",
-            borderRadius: "4px",
-            overflow: "hidden",
-            border: "2px solid rgba(0,122,81,0.5)",
-            boxShadow: "0 0 40px rgba(0,122,81,0.25), 0 20px 60px rgba(0,0,0,0.5)",
-            position: "relative",
-            background: "#080808",
-          }}
-        >
-          {/* Troque pelo <Image> quando tiver a foto: */}
-          {/* <Image src="/chameleon.png" alt="Camaleão" fill style={{ objectFit: "cover" }} /> */}
-          <div
-            style={{
-              width: "100%",
-              height: "100%",
-              background: "linear-gradient(135deg, #0a2010 0%, #1a4a28 40%, #0f2d18 100%)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "80px",
-            }}
-          >
-            🦎
-          </div>
-          <div style={{ position: "absolute", top: 8, left: 8, width: 20, height: 20, borderTop: "2px solid #007A51", borderLeft: "2px solid #007A51" }} />
-          <div style={{ position: "absolute", top: 8, right: 8, width: 20, height: 20, borderTop: "2px solid #007A51", borderRight: "2px solid #007A51" }} />
-          <div style={{ position: "absolute", bottom: 8, left: 8, width: 20, height: 20, borderBottom: "2px solid #007A51", borderLeft: "2px solid #007A51" }} />
-          <div style={{ position: "absolute", bottom: 8, right: 8, width: 20, height: 20, borderBottom: "2px solid #007A51", borderRight: "2px solid #007A51" }} />
-        </div>
+        <Carousel />
 
         <div style={{ flex: 1 }}>
           <p
@@ -98,7 +87,7 @@ export default function Home() {
           </h1>
           <p
             style={{
-              fontSize: "17px",
+              fontSize: "20px",
               lineHeight: 1.85,
               color: "#a5d6a7",
               marginBottom: "20px",
@@ -110,7 +99,7 @@ export default function Home() {
           </p>
           <p
             style={{
-              fontSize: "17px",
+              fontSize: "20px",
               lineHeight: 1.85,
               color: "#a5d6a7",
               fontFamily: "var(--font-museo), sans-serif",
@@ -124,24 +113,7 @@ export default function Home() {
         </div>
       </section>
 
-
-
-      <footer
-        style={{
-          position: "relative",
-          zIndex: 1,
-          borderTop: "1px solid rgba(0,122,81,0.25)",
-          padding: "24px 48px",
-          display: "flex",
-          justifyContent: "center",
-          color: "#4a7a5a",
-          fontSize: "13px",
-          fontFamily: "var(--font-museo), sans-serif",
-          letterSpacing: "0.04em",
-        }}
-      >
-        © 2025 Acervo Camaleônico — Todos os direitos reservados
-      </footer>
+      <Footer />
     </div>
   );
 }
