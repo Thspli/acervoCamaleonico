@@ -55,7 +55,7 @@ const HABILIDADES: Habilidade[] = [
     nome: "Gimme Shelter",
     resumo: "Ataques surpresa com faca causam +1d6 a cada 2 níveis.",
     tags: ["combate", "furtividade"],
-    descricao: `Sempre que fizer um ataque em um inimigo pego de surpresa, e estiver usando facas ou navalhas, seu ataque causa dano furtivo extra conforme avança de nível:\n\n• Nível 1–2: +1d6\n• Nível 4: +2d6\n• Nível 6: +3d6\n• Nível 8: +4d6`,
+    descricao: `Sempre que fizer um ataque em um inimigo pego de surpresa, e estiver usando facas ou navalhas, seu ataque causa dano furtivo extra conforme avança de nível:\n\n• Nível 1: +1d6\n• Nível 2: +2d6\n• Nível 4: +3d6\n• Nível 6: +4d6`,
   },
   {
     id: "another-one-bites-the-dust",
@@ -111,7 +111,7 @@ const HABILIDADES: Habilidade[] = [
     nome: "Sweet Emotion",
     resumo: "Inspire aliados com bônus crescentes de ação, PV temporário ou ataque.",
     tags: ["suporte", "especial"],
-    descricao: `Você sabe inspirar seus aliados em momentos difíceis. Bônus por nível (acumulativos):\n\n• Nível 1: +1 ação em combate (1x/sessão)\n• Nível 2: +1d6 em PVs temporários (1x/sessão)\n• Nível 3: +1 em testes de ataque (2x/sessão)\n• Nível 4: +2 em testes de ataque (2x/sessão)\n• Nível 5: +2d6 em vida temporários (3x/sessão)\n• Nível 6: +1 jogada em teste de morte (4x/sessão)`,
+    descricao: `Você sabe inspirar seus aliados em momentos difíceis. Confira quais bônus você pode dar a eles conforme avança de nível (considerando os anteriores) e quantas vezes a habilidade pode ser usada por sessão.\n\n• Nível 1: +1 ação em combate — 1 uso\n• Nível 2: +1d6 em PVs temporários — 1 uso\n• Nível 3: +1 em testes de ataque — 2 usos\n• Nível 4: +1 jogada em teste de morte — 2 usos\n• Nível 5: +2 em testes de ataque — 3 usos\n• Nível 6: +2d6 em vida temporários — 4 usos`,
   },
   {
     id: "crazy-train",

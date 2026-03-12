@@ -1,382 +1,230 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Header from "../../../components/Header";
-import { AVAILABLE_SYSTEMS } from "@/data/systems";
+import Header from "@/components/Header";
+import { Footer } from "@/components/Footer";
 import { useSystemContext } from "@/contexts/SystemContext";
-import { SystemConfig } from "@/types/systems";
+import { useState } from "react";
+import { Ficha } from "@/types/systems";
 
-// ——— Passos estáticos para seleção de sistema (usados apenas aqui) ———
-const STEPS = [
-  { id: 1, label: "Sistema" },
-  { id: 2, label: "Personagem" },
-  { id: 3, label: "Atributos" },
-  { id: 4, label: "Revisão" },
-];
+const MAX = 20;
 
-// ——— Componente: Linha de Passos ———
-function StepBar({ current, steps = STEPS }: { current: number; steps?: Array<{ id: number; label: string }> }) {
+const IconUser = ({ size = 48 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#007A51" strokeWidth="1.2" strokeLinecap="round">
+    <circle cx="12" cy="8" r="4" />
+    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+  </svg>
+);
+
+const IconTrash = () => (
+  <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="3 6 5 6 21 6" />
+    <path d="M19 6l-1 14H6L5 6" />
+    <path d="M10 11v6M14 11v6" />
+    <path d="M9 6V4h6v2" />
+  </svg>
+);
+
+// Badge de sistema
+function SystemBadge({ systemId }: { systemId: string }) {
+  const labels: Record<string, string> = {
+    "som-das-seis": "Som das Seis",
+  };
   return (
-    <div style={{
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: "0",
-      padding: "28px 0 36px",
-      position: "relative",
+    <span style={{
+      fontSize: "8px", fontWeight: 700,
+      color: "#007A51", letterSpacing: "0.12em",
+      textTransform: "uppercase",
     }}>
-      {steps.map((step, i) => {
-        const done    = step.id < current;
-        const active  = step.id === current;
-        const pending = step.id > current;
+      {labels[systemId] || systemId}
+    </span>
+  );
+}
 
-        return (
-          <div key={step.id} style={{ display: "flex", alignItems: "center" }}>
-            {/* Linha conectora à esquerda */}
-            {i > 0 && (
-              <div style={{
-                width: "80px", height: "1px",
-                background: done || active
-                  ? "linear-gradient(90deg, #007A51, rgba(0,122,81,0.4))"
-                  : "rgba(0,122,81,0.15)",
-                transition: "background 0.4s",
-              }} />
-            )}
+function FichaCard({ ficha, onClick, onDelete }: { ficha: Ficha; onClick: () => void; onDelete: (e: React.MouseEvent) => void }) {
+  const [hover, setHover] = useState(false);
+  const [hoverDelete, setHoverDelete] = useState(false);
 
-            {/* Nó do passo */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
-              <div style={{
-                width: 32, height: 32,
-                borderRadius: "50%",
-                border: `2px solid ${active ? "#007A51" : done ? "#007A51" : "rgba(0,122,81,0.2)"}`,
-                background: active
-                  ? "rgba(0,122,81,0.15)"
-                  : done
-                  ? "#007A51"
-                  : "transparent",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                transition: "all 0.3s ease",
-                boxShadow: active ? "0 0 14px rgba(0,122,81,0.4)" : "none",
-              }}>
-                {done ? (
-                  <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                ) : (
-                  <span style={{
-                    fontSize: "12px", fontWeight: 700,
-                    color: active ? "#81c784" : "rgba(0,122,81,0.35)",
-                    letterSpacing: "0",
-                    fontFamily: "var(--font-museo), sans-serif",
-                  }}>
-                    {step.id}
-                  </span>
-                )}
-              </div>
+  return (
+    <div
+      style={{
+        width: "180px",
+        position: "relative",
+      }}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => { setHover(false); setHoverDelete(false); }}
+    >
+      <button
+        onClick={onClick}
+        style={{
+          width: "100%", height: "220px",
+          background: hover ? "rgba(0,122,81,0.1)" : "rgba(0,20,10,0.7)",
+          border: `2px solid ${hover ? "#007A51" : "rgba(0,122,81,0.45)"}`,
+          borderRadius: "4px", cursor: "pointer",
+          display: "flex", flexDirection: "column",
+          alignItems: "center", justifyContent: "flex-end",
+          padding: "0 0 16px 0",
+          transition: "all 0.2s ease",
+          boxShadow: hover ? "0 0 22px rgba(0,122,81,0.2)" : "none",
+          textAlign: "center",
+          fontFamily: "var(--font-museo), sans-serif",
+          overflow: "hidden",
+        }}
+      >
+        {/* Avatar area */}
+        <div style={{
+          position: "absolute", top: 0, left: 0, right: 0, height: "140px",
+          background: "rgba(0,122,81,0.06)",
+          borderBottom: "1px solid rgba(0,122,81,0.2)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          flexDirection: "column", gap: "6px",
+        }}>
+          <IconUser size={48} />
+          <SystemBadge systemId={ficha.systemId} />
+        </div>
 
-              <span style={{
-                fontSize: "10px",
-                fontWeight: active ? 700 : 400,
-                color: active ? "#81c784" : done ? "#007A51" : "rgba(0,122,81,0.3)",
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                fontFamily: "var(--font-museo), sans-serif",
-                transition: "color 0.3s",
-              }}>
-                {step.label}
-              </span>
-            </div>
-          </div>
-        );
-      })}
+        {/* Nome e jogador */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "3px" }}>
+          <div style={{ fontSize: "13px", fontWeight: 600, color: "#c8e6c9" }}>{ficha.characterName}</div>
+          <div style={{ fontSize: "10px", color: "#4a7a5a" }}>{ficha.playerName}</div>
+        </div>
+      </button>
+
+      {/* Botão deletar — aparece no hover */}
+      {hover && (
+        <button
+          onClick={onDelete}
+          onMouseEnter={() => setHoverDelete(true)}
+          onMouseLeave={() => setHoverDelete(false)}
+          title="Excluir ficha"
+          style={{
+            position: "absolute", top: "8px", right: "8px",
+            width: 26, height: 26,
+            background: hoverDelete ? "rgba(180,40,40,0.3)" : "rgba(0,0,0,0.5)",
+            border: `1px solid ${hoverDelete ? "rgba(239,154,154,0.5)" : "rgba(0,122,81,0.3)"}`,
+            borderRadius: "3px",
+            cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            color: hoverDelete ? "#ef9a9a" : "#4a7a5a",
+            transition: "all 0.15s",
+            zIndex: 2,
+          }}
+        >
+          <IconTrash />
+        </button>
+      )}
     </div>
   );
 }
 
-// ——— Card de Sistema ———
-function SystemCard({
-  system,
-  selected,
-  onSelect,
-}: {
-  system: SystemConfig;
-  selected: boolean;
-  onSelect: () => void;
-}) {
+function NovaFichaButton({ onClick }: { onClick: () => void }) {
   const [hover, setHover] = useState(false);
-  const active = selected || hover;
-
   return (
-    <button
-      onClick={onSelect}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      style={{
-        width: "220px",
-        background: "transparent",
-        border: "none",
-        cursor: "pointer",
-        padding: 0,
-        fontFamily: "var(--font-museo), sans-serif",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: "0",
-      }}
-    >
-      {/* Capa */}
-      <div style={{
-        width: "220px",
-        height: "310px",
-        borderRadius: "4px",
-        overflow: "hidden",
-        border: `2px solid ${selected ? "#007A51" : hover ? "rgba(0,122,81,0.6)" : "rgba(0,122,81,0.2)"}`,
-        boxShadow: selected
-          ? "0 0 32px rgba(0,122,81,0.45), 0 8px 40px rgba(0,0,0,0.6)"
-          : hover
-          ? "0 0 20px rgba(0,122,81,0.2), 0 8px 32px rgba(0,0,0,0.5)"
-          : "0 4px 20px rgba(0,0,0,0.4)",
-        transition: "all 0.25s ease",
-        position: "relative",
-        background: "#060e08",
-      }}>
-        <img
-          src={system.cover}
-          alt={system.name}
-          style={{
-            width: "100%", height: "100%",
-            objectFit: "cover",
-            filter: active ? "brightness(1.05)" : "brightness(0.85)",
-            transition: "filter 0.25s ease",
-          }}
-        />
-
-        {system.tag && (
-          <div style={{
-            position: "absolute", top: "10px", left: "10px",
-            padding: "3px 8px",
-            background: "rgba(0,0,0,0.65)",
-            border: "1px solid rgba(0,122,81,0.4)",
-            borderRadius: "2px",
-            fontSize: "9px", color: "#007A51",
-            letterSpacing: "0.12em", textTransform: "uppercase",
-            fontWeight: 700,
-            backdropFilter: "blur(4px)",
-          }}>
-            {system.tag}
-          </div>
+    <>
+      <style>{`@keyframes scanline { 0% { top: -30%; } 100% { top: 110%; } }`}</style>
+      <button
+        onClick={onClick}
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
+        style={{
+          width: "180px", height: "220px",
+          background: hover
+            ? "linear-gradient(160deg, rgba(0,122,81,0.18) 0%, rgba(0,40,20,0.6) 100%)"
+            : "linear-gradient(160deg, rgba(0,122,81,0.06) 0%, rgba(0,10,5,0.8) 100%)",
+          border: `2px solid ${hover ? "#007A51" : "rgba(0,122,81,0.3)"}`,
+          borderRadius: "4px", cursor: "pointer",
+          display: "flex", flexDirection: "column",
+          alignItems: "center", justifyContent: "center", gap: "14px",
+          transition: "all 0.25s ease",
+          boxShadow: hover ? "0 0 28px rgba(0,122,81,0.25), inset 0 0 20px rgba(0,122,81,0.06)" : "inset 0 0 12px rgba(0,0,0,0.4)",
+          fontFamily: "var(--font-museo), sans-serif",
+          position: "relative", overflow: "hidden",
+        }}
+      >
+        {hover && (
+          <div style={{ position: "absolute", left: 0, right: 0, height: "30%", background: "linear-gradient(180deg, transparent, rgba(0,122,81,0.07), transparent)", animation: "scanline 1.4s linear infinite", pointerEvents: "none" }} />
         )}
+        {/* Cantos */}
+        {[["top","left"],["top","right"],["bottom","left"],["bottom","right"]].map(([v,h]) => (
+          <div key={`${v}${h}`} style={{ position: "absolute", [v]: 8, [h]: 8, width: 16, height: 16, borderTop: v === "top" ? `1.5px solid ${hover ? "#007A51" : "rgba(0,122,81,0.3)"}` : "none", borderBottom: v === "bottom" ? `1.5px solid ${hover ? "#007A51" : "rgba(0,122,81,0.3)"}` : "none", borderLeft: h === "left" ? `1.5px solid ${hover ? "#007A51" : "rgba(0,122,81,0.3)"}` : "none", borderRight: h === "right" ? `1.5px solid ${hover ? "#007A51" : "rgba(0,122,81,0.3)"}` : "none", transition: "border-color 0.25s" }} />
+        ))}
 
-        {/* Overlay de selecionado */}
-        {selected && (
-          <div style={{
-            position: "absolute", inset: 0,
-            background: "rgba(0,122,81,0.08)",
-            display: "flex", alignItems: "flex-end",
-            padding: "12px",
-          }}>
-            <div style={{
-              width: "100%", padding: "6px",
-              background: "rgba(0,122,81,0.85)",
-              borderRadius: "2px",
-              display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
-            }}>
-              <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-              <span style={{ fontSize: "10px", fontWeight: 700, color: "#0a0a0a", letterSpacing: "0.1em" }}>
-                SELECIONADO
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* Cantos decorativos quando hover/selected */}
-        {active && (
-          <>
-            <div style={{ position: "absolute", top: 6, left: 6, width: 14, height: 14, borderTop: "2px solid #007A51", borderLeft: "2px solid #007A51" }} />
-            <div style={{ position: "absolute", top: 6, right: 6, width: 14, height: 14, borderTop: "2px solid #007A51", borderRight: "2px solid #007A51" }} />
-            <div style={{ position: "absolute", bottom: 6, left: 6, width: 14, height: 14, borderBottom: "2px solid #007A51", borderLeft: "2px solid #007A51" }} />
-            <div style={{ position: "absolute", bottom: 6, right: 6, width: 14, height: 14, borderBottom: "2px solid #007A51", borderRight: "2px solid #007A51" }} />
-          </>
-        )}
-      </div>
-
-      {/* Info abaixo da capa */}
-      <div style={{ padding: "14px 4px 0", textAlign: "center" }}>
-        <div style={{
-          fontSize: "14px", fontWeight: 700,
-          color: selected ? "#e8f5e9" : hover ? "#c8e6c9" : "#81c784",
-          letterSpacing: "0.02em",
-          transition: "color 0.2s",
-          marginBottom: "4px",
-        }}>
-          {system.name}
+        <div style={{ width: 48, height: 48, borderRadius: "50%", border: `1.5px solid ${hover ? "#007A51" : "rgba(0,122,81,0.25)"}`, background: hover ? "rgba(0,122,81,0.12)" : "rgba(0,122,81,0.04)", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.25s", boxShadow: hover ? "0 0 16px rgba(0,122,81,0.25)" : "none", position: "relative", zIndex: 1 }}>
+          <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={hover ? "#81c784" : "rgba(0,122,81,0.5)"} strokeWidth="1.8" strokeLinecap="round" style={{ transition: "stroke 0.25s" }}>
+            <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
         </div>
-        <div style={{
-          fontSize: "11px",
-          color: "rgba(0,122,81,0.6)",
-          lineHeight: 1.5,
-          maxWidth: "200px",
-        }}>
-          {system.description}
-        </div>
-      </div>
-    </button>
+        <span style={{ position: "relative", zIndex: 1, fontSize: "11px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: hover ? "#81c784" : "rgba(0,122,81,0.45)", transition: "color 0.25s" }}>
+          Nova Ficha
+        </span>
+      </button>
+    </>
   );
 }
 
-// ——— Página ———
-export default function NovaFichaPage() {
+export default function FichasPage() {
   const router = useRouter();
-  const { setSelectedSystem: setSystemInContext } = useSystemContext();
-  const [selectedSystem, setSelectedSystem] = useState<string | null>(null);
-  const [hoverNext, setHoverNext] = useState(false);
+  const { fichas, deleteFicha } = useSystemContext();
+
+  const handleDelete = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (confirm("Tem certeza que quer excluir esta ficha?")) {
+      deleteFicha(id);
+    }
+  };
+
+  const handleOpen = (ficha: Ficha) => {
+    // Trigger por sistema — expande conforme novos sistemas forem adicionados
+    if (ficha.systemId === "som-das-seis") {
+      router.push(`/fichas/${ficha.id}`);
+    }
+  };
 
   return (
-    <div style={{
-      minHeight: "100vh", background: "#0a0a0a", color: "#c8e6c9",
-      fontFamily: "var(--font-museo), sans-serif",
-      overflowX: "hidden", position: "relative",
-      display: "flex", flexDirection: "column",
-    }}>
-      {/* Fundo */}
-      <div style={{
-        position: "fixed", inset: 0,
-        backgroundImage: `radial-gradient(ellipse at 20% 30%, rgba(0,122,81,0.06) 0%, transparent 55%),
-          radial-gradient(ellipse at 80% 80%, rgba(0,122,81,0.04) 0%, transparent 50%)`,
-        pointerEvents: "none", zIndex: 0,
-      }} />
-      {selectedSystem && (
-        <div style={{
-          position: "fixed", inset: 0,
-          backgroundImage: `url('/velhoseis.webp')`,
-          backgroundSize: "cover", backgroundPosition: "center",
-          opacity: 0.08, pointerEvents: "none", zIndex: 0,
-          transition: "opacity 0.6s ease",
-        }} />
-      )}
+    <div style={{ minHeight: "100vh", background: "#0a0a0a", color: "#c8e6c9", fontFamily: "var(--font-museo), sans-serif", overflowX: "hidden", position: "relative", display: "flex", flexDirection: "column" }}>
+      <div style={{ position: "fixed", inset: 0, backgroundImage: `radial-gradient(ellipse at 15% 40%, rgba(0,122,81,0.05) 0%, transparent 55%), radial-gradient(ellipse at 85% 70%, rgba(0,122,81,0.03) 0%, transparent 50%)`, pointerEvents: "none", zIndex: 0 }} />
+      <div style={{ position: "fixed", top: "68px", left: 0, right: 0, bottom: 0, backgroundImage: "url('/fundo.jpg')", backgroundSize: "cover", backgroundPosition: "center", opacity: 0.04, pointerEvents: "none", zIndex: 0 }} />
 
       <Header />
 
-      <main style={{ flex: 1, position: "relative", zIndex: 1, maxWidth: "900px", margin: "0 auto", width: "100%", padding: "0 48px 80px" }}>
-
-        {/* Linha de passos */}
-        <StepBar current={1} />
-
-        {/* Título do passo */}
-        <div style={{ textAlign: "center", marginBottom: "48px" }}>
-          <p style={{ fontSize: "11px", color: "#007A51", letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: "10px" }}>
-            Passo 1 de {AVAILABLE_SYSTEMS[0]?.steps?.length || 4}
-          </p>
-          <h2 style={{ fontSize: "26px", fontWeight: 700, color: "#e8f5e9", letterSpacing: "-0.01em", marginBottom: "8px" }}>
-            Escolha o Sistema
-          </h2>
-          <p style={{ fontSize: "14px", color: "#4a7a5a", lineHeight: 1.6 }}>
-            Selecione o sistema de RPG da sua campanha para definir as regras da ficha.
-          </p>
+      <main style={{ flex: 1, position: "relative", zIndex: 1, padding: "48px 60px 80px" }}>
+        <div style={{ marginBottom: "36px" }}>
+          <p style={{ fontSize: "11px", color: "#007A51", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "8px" }}>— Minhas Fichas</p>
+          <div style={{ display: "flex", alignItems: "baseline", gap: "20px" }}>
+            <h1 style={{ fontSize: "28px", fontWeight: 700, color: "#e8f5e9", letterSpacing: "-0.01em" }}>Fichas</h1>
+            <span style={{ fontSize: "12px", color: fichas.length >= MAX ? "#ef9a9a" : "#007A51", border: `1px solid ${fichas.length >= MAX ? "rgba(239,154,154,0.3)" : "rgba(0,122,81,0.3)"}`, borderRadius: "20px", padding: "2px 10px", letterSpacing: "0.06em", fontWeight: 600 }}>
+              {fichas.length}/{MAX}
+            </span>
+          </div>
+          <div style={{ marginTop: "16px", height: "1px", background: "rgba(0,122,81,0.2)" }} />
         </div>
 
-        {/* Grid de sistemas */}
-        <div style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "32px",
-          justifyContent: "center",
-          marginBottom: "60px",
-        }}>
-          {AVAILABLE_SYSTEMS.map((s) => (
-            <SystemCard
-              key={s.id}
-              system={s}
-              selected={selectedSystem === s.id}
-              onSelect={() => setSelectedSystem(s.id)}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "16px", alignItems: "flex-start" }}>
+          {fichas.length < MAX && <NovaFichaButton onClick={() => router.push("/fichas/nova")} />}
+          {fichas.map((f) => (
+            <FichaCard
+              key={f.id}
+              ficha={f}
+              onClick={() => handleOpen(f)}
+              onDelete={(e) => handleDelete(e, f.id)}
             />
           ))}
-
-          {/* Placeholder "Em breve" */}
-          {[1, 2].map((i) => (
-            <div key={i} style={{
-              width: "220px", height: "310px",
-              borderRadius: "4px",
-              border: "1px dashed rgba(0,122,81,0.15)",
-              background: "rgba(0,10,5,0.4)",
-              display: "flex", flexDirection: "column",
-              alignItems: "center", justifyContent: "center",
-              gap: "10px",
-            }}>
-              <svg width={28} height={28} viewBox="0 0 24 24" fill="none" stroke="rgba(0,122,81,0.2)" strokeWidth="1.2" strokeLinecap="round">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="12" />
-                <line x1="12" y1="16" x2="12.01" y2="16" />
-              </svg>
-              <span style={{ fontSize: "10px", color: "rgba(0,122,81,0.25)", letterSpacing: "0.12em", textTransform: "uppercase" }}>
-                Em breve
-              </span>
-            </div>
-          ))}
         </div>
 
-        {/* Navegação */}
-        <div style={{
-          display: "flex", justifyContent: "space-between", alignItems: "center",
-          borderTop: "1px solid rgba(0,122,81,0.15)",
-          paddingTop: "28px",
-        }}>
-          <button
-            onClick={() => router.push("/fichas")}
-            style={{
-              background: "none", border: "1px solid rgba(0,122,81,0.25)",
-              color: "#4a7a5a", padding: "10px 22px", borderRadius: "3px",
-              cursor: "pointer", fontSize: "13px",
-              fontFamily: "var(--font-museo), sans-serif",
-              display: "flex", alignItems: "center", gap: "8px",
-              transition: "all 0.2s",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#007A51"; e.currentTarget.style.color = "#81c784"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(0,122,81,0.25)"; e.currentTarget.style.color = "#4a7a5a"; }}
-          >
-            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
-            Voltar
-          </button>
+        {fichas.length === 0 && (
+          <div style={{ marginTop: "20px", fontSize: "13px", color: "#2d4a35", fontStyle: "italic" }}>
+            Nenhuma ficha criada ainda. Clique em "Nova Ficha" para começar.
+          </div>
+        )}
 
-          <button
-            disabled={!selectedSystem}
-            onMouseEnter={() => setHoverNext(true)}
-            onMouseLeave={() => setHoverNext(false)}
-            onClick={() => {
-              if (selectedSystem) {
-                setSystemInContext(selectedSystem);
-                router.push(`/fichas/nova/personagem?sistema=${selectedSystem}`);
-              }
-            }}
-            style={{
-              padding: "11px 32px",
-              background: selectedSystem
-                ? hoverNext ? "#00955f" : "#007A51"
-                : "rgba(0,122,81,0.12)",
-              border: "none",
-              color: selectedSystem ? "#e8f5e9" : "#2d4a35",
-              borderRadius: "3px",
-              cursor: selectedSystem ? "pointer" : "not-allowed",
-              fontSize: "13px", fontWeight: 700,
-              letterSpacing: "0.1em", textTransform: "uppercase",
-              fontFamily: "var(--font-museo), sans-serif",
-              display: "flex", alignItems: "center", gap: "10px",
-              transition: "all 0.2s",
-              boxShadow: selectedSystem && hoverNext ? "0 0 20px rgba(0,122,81,0.3)" : "none",
-            }}
-          >
-            Próximo
-            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-          </button>
-        </div>
+        {fichas.length >= MAX && (
+          <div style={{ marginTop: "32px", padding: "14px 20px", background: "rgba(180,40,40,0.06)", border: "1px solid rgba(239,154,154,0.15)", borderRadius: "3px", fontSize: "13px", color: "#ef9a9a", display: "inline-flex", alignItems: "center", gap: "10px" }}>
+            <span>⚠</span> Você atingiu o limite máximo de {MAX} fichas.
+          </div>
+        )}
       </main>
+
+      <Footer />
     </div>
   );
 }

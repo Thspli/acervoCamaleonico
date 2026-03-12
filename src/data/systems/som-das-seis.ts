@@ -142,20 +142,6 @@ export const somDasSeis: SystemConfig = {
       description: "Distribua pontos nos antecedentes do seu personagem",
       fields: [],
     },
-    {
-      id: "habilidades",
-      order: 6,
-      label: "Habilidades",
-      description: "Escolha duas habilidades para o seu personagem",
-      fields: [],
-    },
-    {
-      id: "review",
-      order: 7,
-      label: "Revisão",
-      description: "Revise suas escolhas antes de finalizar",
-      fields: [],
-    },
   ],
 
   attributes: ["Físico", "Agilidade", "Intelecto", "Coragem"],
