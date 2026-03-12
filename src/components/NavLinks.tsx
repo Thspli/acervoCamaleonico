@@ -40,25 +40,31 @@ const IconClose = ({ size = 18, color = "#2d4a35" }) => (
   </svg>
 );
 
+const NAV_LINKS: { label: string; href: string }[] = [
+  { label: "Fichas",        href: "/fichas" },
+  { label: "Campanhas",     href: "/campanhas" },
+  { label: "Configurações", href: "/configuracoes" },
+];
+
 const menuItems = [
-  { label: "Perfil", Icon: IconUser },
-  { label: "Amizades", Icon: IconFriends },
+  { label: "Perfil",    Icon: IconUser },
+  { label: "Amizades",  Icon: IconFriends },
 ];
 
 export function NavLinks() {
-  const [bell, setBell] = useState(false);
-  const [sidebar, setSidebar] = useState(false);
-  const [hoverClose, setHoverClose] = useState(false);
+  const [bell,        setBell]        = useState(false);
+  const [sidebar,     setSidebar]     = useState(false);
+  const [hoverClose,  setHoverClose]  = useState(false);
   const [hoverLogout, setHoverLogout] = useState(false);
   const [hoverAvatar, setHoverAvatar] = useState(false);
 
   return (
     <>
       <div style={{ display: "flex", gap: "36px", alignItems: "center" }}>
-        {["Fichas", "Campanhas", "Configurações"].map((item) => (
+        {NAV_LINKS.map(({ label, href }) => (
           <a
-            key={item}
-            href="#"
+            key={label}
+            href={href}
             style={{
               color: "#007A51",
               fontSize: "15px",
@@ -70,7 +76,7 @@ export function NavLinks() {
             onMouseEnter={(e) => (e.currentTarget.style.color = "#00955f")}
             onMouseLeave={(e) => (e.currentTarget.style.color = "#007A51")}
           >
-            {item}
+            {label}
           </a>
         ))}
 
