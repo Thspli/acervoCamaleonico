@@ -3,29 +3,20 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Header from "../../../components/Header";
+import { AVAILABLE_SYSTEMS } from "@/data/systems";
+import { useSystemContext } from "@/contexts/SystemContext";
+import { SystemConfig } from "@/types/systems";
 
-// ——— Passos da criação ———
+// ——— Passos estáticos para seleção de sistema (usados apenas aqui) ———
 const STEPS = [
-  { id: 1, label: "Sistema"    },
+  { id: 1, label: "Sistema" },
   { id: 2, label: "Personagem" },
-  { id: 3, label: "Atributos"  },
-  { id: 4, label: "Revisão"    },
-];
-
-// ——— Sistemas disponíveis ———
-const SYSTEMS = [
-  {
-    id: "som-das-seis",
-    name: "Som das Seis",
-    cover: "/somdaseis.jpg",
-    description: "Um sistema original de aventuras épicas em um mundo de magia e música.",
-    tag: "",
-  },
-  // mais sistemas virão aqui
+  { id: 3, label: "Atributos" },
+  { id: 4, label: "Revisão" },
 ];
 
 // ——— Componente: Linha de Passos ———
-function StepBar({ current }: { current: number }) {
+function StepBar({ current, steps = STEPS }: { current: number; steps?: Array<{ id: number; label: string }> }) {
   return (
     <div style={{
       display: "flex",
@@ -35,7 +26,7 @@ function StepBar({ current }: { current: number }) {
       padding: "28px 0 36px",
       position: "relative",
     }}>
-      {STEPS.map((step, i) => {
+      {steps.map((step, i) => {
         const done    = step.id < current;
         const active  = step.id === current;
         const pending = step.id > current;
@@ -109,7 +100,7 @@ function SystemCard({
   selected,
   onSelect,
 }: {
-  system: typeof SYSTEMS[0];
+  system: SystemConfig;
   selected: boolean;
   onSelect: () => void;
 }) {
@@ -239,6 +230,7 @@ function SystemCard({
 // ——— Página ———
 export default function NovaFichaPage() {
   const router = useRouter();
+  const { setSelectedSystem: setSystemInContext } = useSystemContext();
   const [selectedSystem, setSelectedSystem] = useState<string | null>(null);
   const [hoverNext, setHoverNext] = useState(false);
 
@@ -276,7 +268,7 @@ export default function NovaFichaPage() {
         {/* Título do passo */}
         <div style={{ textAlign: "center", marginBottom: "48px" }}>
           <p style={{ fontSize: "11px", color: "#007A51", letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: "10px" }}>
-            Passo 1 de {STEPS.length}
+            Passo 1 de {AVAILABLE_SYSTEMS[0]?.steps?.length || 4}
           </p>
           <h2 style={{ fontSize: "26px", fontWeight: 700, color: "#e8f5e9", letterSpacing: "-0.01em", marginBottom: "8px" }}>
             Escolha o Sistema
@@ -294,7 +286,7 @@ export default function NovaFichaPage() {
           justifyContent: "center",
           marginBottom: "60px",
         }}>
-          {SYSTEMS.map((s) => (
+          {AVAILABLE_SYSTEMS.map((s) => (
             <SystemCard
               key={s.id}
               system={s}
@@ -355,7 +347,12 @@ export default function NovaFichaPage() {
             disabled={!selectedSystem}
             onMouseEnter={() => setHoverNext(true)}
             onMouseLeave={() => setHoverNext(false)}
-            onClick={() => selectedSystem && router.push(`/fichas/nova/personagem?sistema=${selectedSystem}`)}
+            onClick={() => {
+              if (selectedSystem) {
+                setSystemInContext(selectedSystem);
+                router.push(`/fichas/nova/personagem?sistema=${selectedSystem}`);
+              }
+            }}
             style={{
               padding: "11px 32px",
               background: selectedSystem

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { MuseoModerno } from "next/font/google";
 import "./globals.css";
+import { SystemProvider } from "@/contexts/SystemContext";
 
 const museoModerno = MuseoModerno({
   variable: "--font-museo",
@@ -21,7 +22,9 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body className={museoModerno.variable} style={{ fontFamily: "var(--font-museo), sans-serif" }}>
-        {children}
+        <SystemProvider>
+          {children}
+        </SystemProvider>
       </body>
     </html>
   );

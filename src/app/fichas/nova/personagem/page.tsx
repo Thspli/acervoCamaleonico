@@ -3,24 +3,22 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Header from "../../../../components/Header";
+import { useSystemContext } from "@/contexts/SystemContext";
+import { getSystemById, getSystemSteps } from "@/data/systems";
+import { DynamicForm } from "@/components/forms/DynamicForm";
 
-const STEPS = [
-  { id: 1, label: "Sistema"    },
-  { id: 2, label: "Personagem" },
-  { id: 3, label: "Atributos"  },
-  { id: 4, label: "Revisão"    },
-];
+// ——— Linha de passos Dinâmica ———
+function StepBar({ current, steps }: { current: number; steps: Array<{ id: string; label: string; order: number }> }) {
+  const sortedSteps = [...steps].sort((a, b) => a.order - b.order);
 
-// ——— Linha de passos ———
-function StepBar({ current }: { current: number }) {
   return (
     <div style={{
       display: "flex", alignItems: "center", justifyContent: "center",
       padding: "28px 0 36px",
     }}>
-      {STEPS.map((step, i) => {
-        const done   = step.id < current;
-        const active = step.id === current;
+      {sortedSteps.map((step, i) => {
+        const done   = step.order < current;
+        const active = step.order === current;
 
         return (
           <div key={step.id} style={{ display: "flex", alignItems: "center" }}>
@@ -48,7 +46,7 @@ function StepBar({ current }: { current: number }) {
                   </svg>
                 ) : (
                   <span style={{ fontSize: "12px", fontWeight: 700, color: active ? "#81c784" : "rgba(0,122,81,0.35)", fontFamily: "var(--font-museo), sans-serif" }}>
-                    {step.id}
+                    {step.order}
                   </span>
                 )}
               </div>
@@ -69,197 +67,90 @@ function StepBar({ current }: { current: number }) {
   );
 }
 
-// ——— Componentes de campo ———
-function FieldLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <span style={{
-      fontSize: "10px", fontWeight: 700,
-      color: "#007A51", letterSpacing: "0.14em",
-      textTransform: "uppercase",
-      fontFamily: "var(--font-museo), sans-serif",
-    }}>
-      {children}
-    </span>
-  );
-}
-
-function FieldHint({ children }: { children: React.ReactNode }) {
-  return (
-    <span style={{ fontSize: "10px", color: "#2d4a35", letterSpacing: "0.04em", lineHeight: 1.4 }}>
-      {children}
-    </span>
-  );
-}
-
-const baseInput: React.CSSProperties = {
-  width: "100%",
-  padding: "11px 14px",
-  background: "rgba(0,15,8,0.85)",
-  border: "1px solid rgba(0,122,81,0.25)",
-  borderRadius: "3px",
-  color: "#c8e6c9",
-  fontSize: "14px",
-  outline: "none",
-  fontFamily: "var(--font-museo), sans-serif",
-  transition: "border-color 0.2s, box-shadow 0.2s",
-};
-
-function TextInput({ value, onChange, placeholder, type = "text" }: {
-  value: string; onChange: (v: string) => void;
-  placeholder?: string; type?: string;
-}) {
-  return (
-    <input
-      type={type}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      style={baseInput}
-      onFocus={(e) => { e.target.style.borderColor = "#007A51"; e.target.style.boxShadow = "0 0 0 3px rgba(0,122,81,0.08)"; }}
-      onBlur={(e)  => { e.target.style.borderColor = "rgba(0,122,81,0.25)"; e.target.style.boxShadow = "none"; }}
-    />
-  );
-}
-
-// Spinner numérico com botões + / -
-function NumberSpinner({ value, onChange, min = 0, max = 999, label, hint }: {
-  value: number; onChange: (v: number) => void;
-  min?: number; max?: number; label: string; hint?: string;
-}) {
-  const [focused, setFocused] = useState(false);
-
-  const dec = () => onChange(Math.max(min, value - 1));
-  const inc = () => onChange(Math.min(max, value + 1));
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-      <FieldLabel>{label}</FieldLabel>
-      <div style={{
-        display: "flex", alignItems: "center",
-        border: `1px solid ${focused ? "#007A51" : "rgba(0,122,81,0.25)"}`,
-        borderRadius: "3px", overflow: "hidden",
-        boxShadow: focused ? "0 0 0 3px rgba(0,122,81,0.08)" : "none",
-        transition: "border-color 0.2s, box-shadow 0.2s",
-        background: "rgba(0,15,8,0.85)",
-      }}>
-        <button
-          onClick={dec}
-          style={{
-            width: 38, height: 42, background: "transparent",
-            border: "none", borderRight: "1px solid rgba(0,122,81,0.15)",
-            color: "rgba(0,122,81,0.6)", cursor: "pointer",
-            fontSize: "18px", lineHeight: 1,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            transition: "background 0.15s, color 0.15s",
-            fontFamily: "var(--font-museo), sans-serif",
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(0,122,81,0.08)"; e.currentTarget.style.color = "#81c784"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "rgba(0,122,81,0.6)"; }}
-        >−</button>
-
-        <input
-          type="number"
-          value={value}
-          min={min} max={max}
-          onChange={(e) => {
-            const v = parseInt(e.target.value);
-            if (!isNaN(v)) onChange(Math.min(max, Math.max(min, v)));
-          }}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          style={{
-            flex: 1, border: "none", background: "transparent",
-            color: "#c8e6c9", fontSize: "15px", fontWeight: 600,
-            textAlign: "center", outline: "none",
-            fontFamily: "var(--font-museo), sans-serif",
-            MozAppearance: "textfield",
-          } as React.CSSProperties}
-        />
-
-        <button
-          onClick={inc}
-          style={{
-            width: 38, height: 42, background: "transparent",
-            border: "none", borderLeft: "1px solid rgba(0,122,81,0.15)",
-            color: "rgba(0,122,81,0.6)", cursor: "pointer",
-            fontSize: "18px", lineHeight: 1,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            transition: "background 0.15s, color 0.15s",
-            fontFamily: "var(--font-museo), sans-serif",
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(0,122,81,0.08)"; e.currentTarget.style.color = "#81c784"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "rgba(0,122,81,0.6)"; }}
-        >+</button>
-      </div>
-      {hint && <FieldHint>{hint}</FieldHint>}
-    </div>
-  );
-}
-
-// Campo de moeda
-function MoneyInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  return (
-    <div style={{ position: "relative" }}>
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="0"
-        style={{ ...baseInput, paddingLeft: "40px" }}
-        onFocus={(e) => { e.target.style.borderColor = "#007A51"; e.target.style.boxShadow = "0 0 0 3px rgba(0,122,81,0.08)"; }}
-        onBlur={(e)  => { e.target.style.borderColor = "rgba(0,122,81,0.25)"; e.target.style.boxShadow = "none"; }}
-      />
-      <span style={{
-        position: "absolute", left: "13px", top: "50%", transform: "translateY(-50%)",
-        fontSize: "13px", color: "rgba(0,122,81,0.6)", fontWeight: 700,
-        pointerEvents: "none", fontFamily: "var(--font-museo), sans-serif",
-      }}>
-        ⬡
-      </span>
-    </div>
-  );
-}
-
-// Divider com título de seção
-function SectionDivider({ title }: { title: string }) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: "14px", margin: "8px 0 4px" }}>
-      <span style={{ fontSize: "10px", color: "rgba(0,122,81,0.5)", letterSpacing: "0.16em", textTransform: "uppercase", fontWeight: 700, whiteSpace: "nowrap", fontFamily: "var(--font-museo), sans-serif" }}>
-        {title}
-      </span>
-      <div style={{ flex: 1, height: "1px", background: "rgba(0,122,81,0.12)" }} />
-    </div>
-  );
-}
-
 // ——— Página ———
 export default function PersonagemPage() {
-  const router       = useRouter();
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const sistema      = searchParams.get("sistema") ?? "som-das-seis";
+  const sistemId = searchParams.get("sistema");
 
-  const [nome,       setNome]       = useState("");
-  const [nivel,      setNivel]      = useState(1);
-  const [tormento,   setTormento]   = useState(0);
-  const [recompensa, setRecompensa] = useState(0);
-  const [reputacao,  setReputacao]  = useState(0);
-  const [dinheiro,   setDinheiro]   = useState("");
+  const { selectedSystem, characterData, updateCharacterData, getCharacterDataByStep } = useSystemContext();
 
-  const canAdvance = nome.trim().length > 0;
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+
+  // Garantir que o sistema foi selecionado via contexto
+  const system = selectedSystem || (sistemId ? getSystemById(sistemId) : null);
+
+  if (!system) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          background: "#0a0a0a",
+          color: "#c8e6c9",
+          fontFamily: "var(--font-museo), sans-serif",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <div style={{ textAlign: "center" }}>
+          <h1 style={{ color: "#e8f5e9", marginBottom: "12px" }}>Sistema não encontrado</h1>
+          <p style={{ color: "#4a7a5a", marginBottom: "20px" }}>Volte e selecione um sistema válido.</p>
+          <button
+            onClick={() => router.push("/fichas/nova")}
+            style={{
+              padding: "11px 22px",
+              background: "#007A51",
+              border: "none",
+              color: "#e8f5e9",
+              borderRadius: "3px",
+              cursor: "pointer",
+              fontSize: "13px",
+              fontFamily: "var(--font-museo), sans-serif",
+            }}
+          >
+            Voltar para seleção de sistema
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // obtém todos os passos definidos pelo sistema. não filtramos nada aqui
+  // para que o StepBar continue mostrando o primeiro passo e a numeração
+  // não salte quando avançarmos.
+  const steps = getSystemSteps(system.id);
+  const currentStep = steps[currentStepIndex];
+
+  if (!currentStep) {
+    return null;
+  }
+
+  const canAdvance = currentStep.fields.length === 0 || 
+    currentStep.fields.every(field => {
+      if (!field.required) return true;
+      const value = getCharacterDataByStep(currentStep.id)[field.id];
+      return value !== "" && value !== undefined && value !== null;
+    });
 
   const handleNext = () => {
-    if (!canAdvance) return;
-    const params = new URLSearchParams({
-      sistema,
-      nome: nome.trim(),
-      nivel: String(nivel),
-      tormento: String(tormento),
-      recompensa: String(recompensa),
-      reputacao: String(reputacao),
-      dinheiro,
-    });
-    router.push(`/fichas/nova/atributos?${params.toString()}`);
+    if (canAdvance && currentStepIndex < steps.length - 1) {
+      setCurrentStepIndex(currentStepIndex + 1);
+    } else if (canAdvance && currentStepIndex === steps.length - 1) {
+      // Última etapa - redirecionar para revisão ou salvar
+      router.push(`/fichas/nova/revisao?sistema=${system.id}`);
+    }
   };
+
+  const handlePrevious = () => {
+    if (currentStepIndex > 0) {
+      setCurrentStepIndex(currentStepIndex - 1);
+    } else {
+      router.push("/fichas/nova");
+    }
+  };
+
+  const stepData = getCharacterDataByStep(currentStep.id);
 
   return (
     <div style={{
@@ -286,92 +177,80 @@ export default function PersonagemPage() {
 
       <main style={{ flex: 1, position: "relative", zIndex: 1, maxWidth: "760px", margin: "0 auto", width: "100%", padding: "0 48px 80px" }}>
 
-        <StepBar current={2} />
+        <StepBar current={currentStep.order} steps={steps} />
 
         {/* Título */}
         <div style={{ textAlign: "center", marginBottom: "44px" }}>
           <p style={{ fontSize: "11px", color: "#007A51", letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: "10px" }}>
-            Passo 2 de {STEPS.length}
+            Passo {currentStep.order} de {steps.length}
           </p>
           <h2 style={{ fontSize: "26px", fontWeight: 700, color: "#e8f5e9", letterSpacing: "-0.01em", marginBottom: "8px" }}>
-            Dados do Personagem
+            {currentStep.label}
           </h2>
           <p style={{ fontSize: "14px", color: "#4a7a5a", lineHeight: 1.6 }}>
-            Preencha as informações básicas da sua ficha de <span style={{ color: "#81c784" }}>Som das Seis</span>.
+            Preenchendo ficha de <span style={{ color: "#81c784" }}>{system.name}</span>
           </p>
         </div>
 
-        {/* Formulário */}
-        <div style={{
-          background: "rgba(0,10,5,0.6)",
-          border: "1px solid rgba(0,122,81,0.18)",
-          borderRadius: "6px",
-          padding: "32px 36px",
-          display: "flex", flexDirection: "column", gap: "24px",
-          backdropFilter: "blur(8px)",
-        }}>
-
-          {/* Identidade */}
-          <SectionDivider title="Identidade" />
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <FieldLabel>Nome do Personagem *</FieldLabel>
-            <TextInput value={nome} onChange={setNome} placeholder="Como seu personagem é chamado?" />
+        {/* Formulário Dinâmico ou conteúdo especial para passos vazios */}
+        {currentStep.id === "system-info" ? (
+          <div
+            style={{
+              background: "rgba(0,10,5,0.6)",
+              border: "1px solid rgba(0,122,81,0.18)",
+              borderRadius: "6px",
+              padding: "32px 36px",
+              textAlign: "center",
+              backdropFilter: "blur(8px)",
+            }}
+          >
+            <p style={{ fontSize: "16px", color: "#e8f5e9", marginBottom: "8px" }}>
+              Sistema selecionado:
+            </p>
+            <p style={{ fontSize: "20px", fontWeight: 700, color: "#81c784" }}>
+              {system.name}
+            </p>
+            <p style={{ fontSize: "14px", color: "#4a7a5a", marginTop: "12px" }}>
+              Você pode avançar para começar a preencher os dados do personagem.
+            </p>
           </div>
-
-          <div style={{ maxWidth: "200px" }}>
-            <NumberSpinner
-              label="Nível"
-              value={nivel}
-              onChange={setNivel}
-              min={1} max={20}
-              hint="Nível atual do personagem (1–20)"
+        ) : currentStep.fields.length > 0 ? (
+          <div
+            style={{
+              background: "rgba(0,10,5,0.6)",
+              border: "1px solid rgba(0,122,81,0.18)",
+              borderRadius: "6px",
+              padding: "32px 36px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "24px",
+              backdropFilter: "blur(8px)",
+            }}
+          >
+            <DynamicForm
+              step={currentStep}
+              initialData={stepData}
+              onDataChange={(fieldId, value) => {
+                updateCharacterData(currentStep.id, fieldId, value);
+              }}
             />
           </div>
-
-          {/* Progressão */}
-          <SectionDivider title="Progressão" />
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
-            <NumberSpinner
-              label="Tormento"
-              value={tormento}
-              onChange={setTormento}
-              min={0} max={999}
-              hint="Pontos de tormento acumulados"
-            />
-            <NumberSpinner
-              label="Recompensa"
-              value={recompensa}
-              onChange={setRecompensa}
-              min={0} max={999}
-              hint="Recompensas recebidas"
-            />
+        ) : (
+          <div
+            style={{
+              background: "rgba(0,10,5,0.6)",
+              border: "1px solid rgba(0,122,81,0.18)",
+              borderRadius: "6px",
+              padding: "32px 36px",
+              textAlign: "center",
+              backdropFilter: "blur(8px)",
+            }}
+          >
+            <p style={{ fontSize: "14px", color: "#4a7a5a", lineHeight: 1.6 }}>
+              Revise suas informações antes de finalizar a criação.
+            </p>
           </div>
-
-          <div style={{ maxWidth: "200px" }}>
-            <NumberSpinner
-              label="Reputação"
-              value={reputacao}
-              onChange={setReputacao}
-              min={0} max={999}
-              hint="Nível de reputação no mundo"
-            />
-          </div>
-
-          {/* Recursos */}
-          <SectionDivider title="Recursos" />
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxWidth: "240px" }}>
-            <FieldLabel>Dinheiro</FieldLabel>
-            <MoneyInput value={dinheiro} onChange={setDinheiro} />
-            <FieldHint>Quantidade de moedas em posse</FieldHint>
-          </div>
-
-          <p style={{ fontSize: "10px", color: "#2d4a35", letterSpacing: "0.04em", marginTop: "4px" }}>
-            * Campo obrigatório
-          </p>
-        </div>
+        )}
 
         {/* Navegação */}
         <div style={{
@@ -380,7 +259,7 @@ export default function PersonagemPage() {
           paddingTop: "28px", marginTop: "32px",
         }}>
           <button
-            onClick={() => router.push("/fichas/nova")}
+            onClick={handlePrevious}
             style={{
               background: "none", border: "1px solid rgba(0,122,81,0.25)",
               color: "#4a7a5a", padding: "10px 22px", borderRadius: "3px",
@@ -417,7 +296,7 @@ export default function PersonagemPage() {
             onMouseEnter={(e) => { if (canAdvance) e.currentTarget.style.background = "#00955f"; }}
             onMouseLeave={(e) => { if (canAdvance) e.currentTarget.style.background = "#007A51"; }}
           >
-            Próximo
+            {currentStepIndex === steps.length - 1 ? "Finalizar" : "Próximo"}
             <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <polyline points="9 18 15 12 9 6" />
             </svg>
