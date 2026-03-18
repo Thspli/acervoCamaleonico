@@ -1,13 +1,25 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import Header from "@/components/Header";
-import { useSystemContext } from "@/contexts/SystemContext";
-import { getSystemById } from "@/data/systems";
+import { Ficha } from "@/types/systems";
+
+// ─── Carrega ficha do localStorage ───────────────────────────────────────────
+function loadFichaById(id: string): Ficha | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem("acervo_fichas");
+    if (!raw) return null;
+    const fichas: Ficha[] = JSON.parse(raw);
+    return fichas.find((f) => f.id === id) ?? null;
+  } catch {
+    return null;
+  }
+}
 
 // ─── Tipos locais ─────────────────────────────────────────────────────────────
 interface SomDasSeisFicha {
-  // Personagem
   "character-name": string;
   "player-name": string;
   nivel: number;
@@ -15,14 +27,11 @@ interface SomDasSeisFicha {
   recompensa: number;
   dinheiro: number;
   reputacao: number;
-  // Atributos
   fisico: number;
   agilidade: number;
   intelecto: number;
   coragem: number;
-  // Habilidades
   escolhidas: string[];
-  // Antecedentes
   combate: number;
   labuta: number;
   montaria: number;
@@ -33,7 +42,7 @@ interface SomDasSeisFicha {
   tradicao: number;
 }
 
-// ─── Dados das habilidades (resumo para exibição) ─────────────────────────────
+// ─── Dados das habilidades ─────────────────────────────────────────────────────
 const HABILIDADES_MAP: Record<string, { nome: string; resumo: string; tag: string; tagColor: string }> = {
   "light-my-fire":              { nome: "Light My Fire",              resumo: "+1 no teste com revólver e +1 de dano por Agilidade.",          tag: "Combate",     tagColor: "#c0392b" },
   "lets-dance":                 { nome: "Let's Dance",                resumo: "Dois disparos em uma ação com -1 no teste (martelo).",           tag: "Combate",     tagColor: "#c0392b" },
@@ -81,34 +90,27 @@ const ATTR_META = [
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function calcVida(fisico: number, nivel: number) {
-  // Base 6 + 1d6 médio (3.5 ~= 4) por ponto de físico, por nível
   return 6 + fisico * 4 * nivel;
 }
-
 function calcAcoes(agilidade: number) {
   return 1 + agilidade;
 }
-
 function calcIniciativa(coragem: number) {
   return coragem;
 }
-
 function calcDefesa(agilidade: number) {
   return 10 + agilidade;
 }
-
 function getReputLabel(val: number): { text: string; color: string } {
-  // val: -2 a 2 → visual 0–100
   const vis = ((val + 2) / 4) * 100;
-  if (vis <= 20) return { text: "Lendário", color: "#81c784" };
+  if (vis <= 20) return { text: "Lendário",   color: "#81c784" };
   if (vis <= 40) return { text: "Respeitado", color: "#a5d6a7" };
-  if (vis <= 60) return { text: "Neutro", color: "#b0bec5" };
-  if (vis <= 80) return { text: "Suspeito", color: "#ef9a9a" };
+  if (vis <= 60) return { text: "Neutro",     color: "#b0bec5" };
+  if (vis <= 80) return { text: "Suspeito",   color: "#ef9a9a" };
   return { text: "Infame", color: "#e53935" };
 }
 
 // ─── Componentes visuais ──────────────────────────────────────────────────────
-
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
@@ -149,10 +151,7 @@ function DotRow({ value, max = 5, color }: { value: number; max?: number; color:
   );
 }
 
-// Stat box para Defesa / Ações / Iniciativa / Vida
-function StatBox({
-  label, value, sub, color, large,
-}: {
+function StatBox({ label, value, sub, color, large }: {
   label: string; value: string | number; sub?: string; color: string; large?: boolean;
 }) {
   return (
@@ -166,7 +165,6 @@ function StatBox({
       backdropFilter: "blur(8px)",
       flex: 1,
     }}>
-      {/* Glow */}
       <div style={{
         position: "absolute", inset: 0,
         background: `radial-gradient(ellipse at 50% 0%, ${color}12, transparent 70%)`,
@@ -201,9 +199,8 @@ function StatBox({
   );
 }
 
-// Card de atributo com dots
-function AttrCard({ id, label, color, bonus, value }: {
-  id: string; label: string; color: string; bonus: string; value: number;
+function AttrCard({ label, color, bonus, value }: {
+  label: string; color: string; bonus: string; value: number;
 }) {
   return (
     <div style={{
@@ -224,10 +221,7 @@ function AttrCard({ id, label, color, bonus, value }: {
         pointerEvents: "none",
       }} />
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <span style={{
-          fontSize: "12px", fontWeight: 700, color: "#c8e6c9",
-          fontFamily: "var(--font-museo), sans-serif",
-        }}>
+        <span style={{ fontSize: "12px", fontWeight: 700, color: "#c8e6c9", fontFamily: "var(--font-museo), sans-serif" }}>
           {label}
         </span>
         <span style={{
@@ -254,12 +248,69 @@ function AttrCard({ id, label, color, bonus, value }: {
   );
 }
 
+// ─── Loading / Not found ──────────────────────────────────────────────────────
+function NotFound({ onBack }: { onBack: () => void }) {
+  return (
+    <div style={{
+      minHeight: "100vh", background: "#0a0a0a", color: "#c8e6c9",
+      fontFamily: "var(--font-museo), sans-serif",
+      display: "flex", flexDirection: "column",
+    }}>
+      <Header />
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: "16px" }}>
+        <p style={{ fontSize: "13px", color: "#4a7a5a" }}>Ficha não encontrada.</p>
+        <button
+          onClick={onBack}
+          style={{
+            padding: "10px 22px", background: "#007A51", border: "none",
+            color: "#e8f5e9", borderRadius: "3px", cursor: "pointer",
+            fontSize: "13px", fontFamily: "var(--font-museo), sans-serif",
+          }}
+        >
+          Voltar para Fichas
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Página principal ─────────────────────────────────────────────────────────
 export default function FichaViewPage() {
   const router = useRouter();
-  const { characterData, selectedSystem } = useSystemContext();
+  const params = useParams();
+  const id = params?.id as string;
 
-  // Monta o objeto flat com todos os dados
+  const [ficha, setFicha] = useState<Ficha | null | undefined>(undefined); // undefined = carregando
+
+  useEffect(() => {
+    if (id) {
+      const found = loadFichaById(id);
+      setFicha(found);
+    }
+  }, [id]);
+
+  // Carregando
+  if (ficha === undefined) {
+    return (
+      <div style={{
+        minHeight: "100vh", background: "#0a0a0a", color: "#c8e6c9",
+        fontFamily: "var(--font-museo), sans-serif",
+        display: "flex", flexDirection: "column",
+      }}>
+        <Header />
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <span style={{ fontSize: "13px", color: "#4a7a5a" }}>Carregando ficha...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Não encontrado
+  if (!ficha) return <NotFound onBack={() => router.push("/fichas")} />;
+
+  // ── Extrai dados da ficha ──
+  const characterData = ficha.data;
+
   const raw: Partial<SomDasSeisFicha> = {
     ...(characterData["character-basics"] as any || {}),
     ...(characterData["attributes"] as any || {}),
@@ -282,10 +333,10 @@ export default function FichaViewPage() {
 
   const escolhidas = (raw.escolhidas as string[]) || [];
 
-  const vida      = calcVida(fisico, nivel);
-  const acoes     = calcAcoes(agilidade);
+  const vida       = calcVida(fisico, nivel);
+  const acoes      = calcAcoes(agilidade);
   const iniciativa = calcIniciativa(coragem);
-  const defesa    = calcDefesa(agilidade);
+  const defesa     = calcDefesa(agilidade);
 
   const { text: reputLabel, color: reputColor } = getReputLabel(reputacao);
 
@@ -293,7 +344,7 @@ export default function FichaViewPage() {
     id, ...meta, value: Number((characterData["antecedentes"] as any)?.[id]) || 0,
   }));
 
-  const systemName = selectedSystem?.name || "Som das Seis";
+  const systemName = ficha.systemId === "som-das-seis" ? "Som das Seis" : ficha.systemId;
 
   return (
     <div style={{
@@ -329,7 +380,7 @@ export default function FichaViewPage() {
         padding: "40px 48px 80px",
       }}>
 
-        {/* ── Voltar ── */}
+        {/* Voltar */}
         <button
           onClick={() => router.push("/fichas")}
           style={{
@@ -337,8 +388,7 @@ export default function FichaViewPage() {
             color: "#4a7a5a", cursor: "pointer",
             display: "flex", alignItems: "center", gap: "6px",
             fontSize: "12px", fontFamily: "var(--font-museo), sans-serif",
-            marginBottom: "32px", padding: 0,
-            transition: "color 0.2s",
+            marginBottom: "32px", padding: 0, transition: "color 0.2s",
           }}
           onMouseEnter={(e) => (e.currentTarget.style.color = "#81c784")}
           onMouseLeave={(e) => (e.currentTarget.style.color = "#4a7a5a")}
@@ -349,9 +399,7 @@ export default function FichaViewPage() {
           Minhas Fichas
         </button>
 
-        {/* ══════════════════════════════════════════
-            HERO — Nome, jogador, nível, sistema
-        ══════════════════════════════════════════ */}
+        {/* ── Hero ── */}
         <div style={{
           background: "rgba(0,10,5,0.75)",
           border: "1px solid rgba(0,122,81,0.25)",
@@ -361,7 +409,6 @@ export default function FichaViewPage() {
           backdropFilter: "blur(10px)",
           position: "relative", overflow: "hidden",
         }}>
-          {/* Cantos decorativos */}
           {[["top","left"],["top","right"],["bottom","left"],["bottom","right"]].map(([v,h]) => (
             <div key={`${v}${h}`} style={{
               position: "absolute",
@@ -376,7 +423,6 @@ export default function FichaViewPage() {
 
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "20px" }}>
             <div style={{ flex: 1 }}>
-              {/* Badge sistema */}
               <div style={{
                 display: "inline-flex", alignItems: "center", gap: "6px",
                 padding: "3px 10px",
@@ -409,7 +455,6 @@ export default function FichaViewPage() {
               </div>
             </div>
 
-            {/* Reputação */}
             <div style={{
               display: "flex", flexDirection: "column", alignItems: "center", gap: "6px",
               padding: "14px 20px",
@@ -428,9 +473,7 @@ export default function FichaViewPage() {
           </div>
         </div>
 
-        {/* ══════════════════════════════════════════
-            SEÇÃO CENTRAL — Defesa, Atributos, Ações
-        ══════════════════════════════════════════ */}
+        {/* ── Combate & Estatísticas ── */}
         <div style={{
           background: "rgba(0,10,5,0.6)",
           border: "1px solid rgba(0,122,81,0.2)",
@@ -439,62 +482,44 @@ export default function FichaViewPage() {
           marginBottom: "24px",
           backdropFilter: "blur(8px)",
         }}>
-          <SectionLabel>Combate & Estatísticas</SectionLabel>
+          <SectionLabel>Combate &amp; Estatísticas</SectionLabel>
 
-          {/* Stats principais */}
           <div style={{ display: "flex", gap: "12px", marginBottom: "24px" }}>
-            <StatBox label="Vida"       value={vida}      sub={`base + ${fisico} Físico × ${nivel}`} color="#c0392b" large />
-            <StatBox label="Defesa"     value={defesa}    sub={`10 + Agilidade`}                     color="#d4a017" />
-            <StatBox label="Ações"      value={acoes}     sub={`1 + Agilidade`}                      color="#2e7d6b" />
-            <StatBox label="Iniciativa" value={`+${iniciativa}`} sub="Coragem"                       color="#8e44ad" />
+            <StatBox label="Vida"       value={vida}           sub={`base + ${fisico} Físico × ${nivel}`} color="#c0392b" large />
+            <StatBox label="Defesa"     value={defesa}         sub="10 + Agilidade"                       color="#d4a017" />
+            <StatBox label="Ações"      value={acoes}          sub="1 + Agilidade"                        color="#2e7d6b" />
+            <StatBox label="Iniciativa" value={`+${iniciativa}`} sub="Coragem"                            color="#8e44ad" />
           </div>
 
-          {/* Atributos */}
           <div style={{ display: "flex", gap: "12px" }}>
             {ATTR_META.map((a) => {
               const val = a.id === "fisico" ? fisico : a.id === "agilidade" ? agilidade : a.id === "intelecto" ? intelecto : coragem;
-              return (
-                <AttrCard
-                  key={a.id}
-                  id={a.id}
-                  label={a.label}
-                  color={a.color}
-                  bonus={a.bonus}
-                  value={val}
-                />
-              );
+              return <AttrCard key={a.id} label={a.label} color={a.color} bonus={a.bonus} value={val} />;
             })}
           </div>
         </div>
 
-        {/* ══════════════════════════════════════════
-            COLUNA CENTRAL — restante
-        ══════════════════════════════════════════ */}
+        {/* ── Recursos, Habilidades, Antecedentes, Tormento ── */}
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
 
-          {/* ── Recursos ── */}
+          {/* Recursos */}
           <div style={{
-            background: "rgba(0,10,5,0.6)",
-            border: "1px solid rgba(0,122,81,0.18)",
-            borderRadius: "8px",
-            padding: "24px 32px",
-            backdropFilter: "blur(8px)",
+            background: "rgba(0,10,5,0.6)", border: "1px solid rgba(0,122,81,0.18)",
+            borderRadius: "8px", padding: "24px 32px", backdropFilter: "blur(8px)",
           }}>
             <SectionLabel>Recursos</SectionLabel>
             <div style={{ display: "flex", gap: "16px" }}>
               {[
-                { label: "Dinheiro",    value: `$ ${dinheiro}`,   color: "#d4a017" },
-                { label: "Recompensa",  value: `$ ${recompensa}`, color: "#c07020" },
+                { label: "Dinheiro",   value: `$ ${dinheiro}`,   color: "#d4a017" },
+                { label: "Recompensa", value: `$ ${recompensa}`, color: "#c07020" },
               ].map(({ label, value, color }) => (
                 <div key={label} style={{
-                  flex: 1,
-                  padding: "16px 20px",
+                  flex: 1, padding: "16px 20px",
                   background: "rgba(0,15,8,0.7)",
-                  border: `1px solid ${color}25`,
-                  borderRadius: "6px",
+                  border: `1px solid ${color}25`, borderRadius: "6px",
                   display: "flex", flexDirection: "column", gap: "6px",
                 }}>
-                  <span style={{ fontSize: "9px", fontWeight: 700, color: color, letterSpacing: "0.16em", textTransform: "uppercase" }}>
+                  <span style={{ fontSize: "9px", fontWeight: 700, color, letterSpacing: "0.16em", textTransform: "uppercase" }}>
                     {label}
                   </span>
                   <span style={{ fontSize: "24px", fontWeight: 700, color: "#e8f5e9", fontFamily: "var(--font-museo), sans-serif" }}>
@@ -505,24 +530,21 @@ export default function FichaViewPage() {
             </div>
           </div>
 
-          {/* ── Habilidades ── */}
+          {/* Habilidades */}
           <div style={{
-            background: "rgba(0,10,5,0.6)",
-            border: "1px solid rgba(0,122,81,0.18)",
-            borderRadius: "8px",
-            padding: "24px 32px",
-            backdropFilter: "blur(8px)",
+            background: "rgba(0,10,5,0.6)", border: "1px solid rgba(0,122,81,0.18)",
+            borderRadius: "8px", padding: "24px 32px", backdropFilter: "blur(8px)",
           }}>
             <SectionLabel>Habilidades</SectionLabel>
             {escolhidas.length === 0 ? (
               <p style={{ fontSize: "13px", color: "#2d4a35" }}>Nenhuma habilidade escolhida.</p>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                {escolhidas.map((id) => {
-                  const h = HABILIDADES_MAP[id];
+                {escolhidas.map((habId) => {
+                  const h = HABILIDADES_MAP[habId];
                   if (!h) return null;
                   return (
-                    <div key={id} style={{
+                    <div key={habId} style={{
                       display: "flex", alignItems: "center", gap: "14px",
                       padding: "14px 16px",
                       background: "rgba(0,15,8,0.7)",
@@ -550,18 +572,15 @@ export default function FichaViewPage() {
             )}
           </div>
 
-          {/* ── Antecedentes ── */}
+          {/* Antecedentes */}
           <div style={{
-            background: "rgba(0,10,5,0.6)",
-            border: "1px solid rgba(0,122,81,0.18)",
-            borderRadius: "8px",
-            padding: "24px 32px",
-            backdropFilter: "blur(8px)",
+            background: "rgba(0,10,5,0.6)", border: "1px solid rgba(0,122,81,0.18)",
+            borderRadius: "8px", padding: "24px 32px", backdropFilter: "blur(8px)",
           }}>
             <SectionLabel>Antecedentes</SectionLabel>
             <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-              {antecedentesEntries.map(({ id, label, color, value }) => (
-                <div key={id} style={{
+              {antecedentesEntries.map(({ id: antId, label, color, value }) => (
+                <div key={antId} style={{
                   display: "flex", alignItems: "center", gap: "14px",
                   padding: "10px 14px",
                   background: value > 0 ? "rgba(0,15,8,0.8)" : "rgba(0,10,5,0.4)",
@@ -569,7 +588,6 @@ export default function FichaViewPage() {
                   borderRadius: "5px",
                   borderLeft: `3px solid ${value > 0 ? color : "rgba(0,122,81,0.12)"}`,
                   opacity: value === 0 ? 0.45 : 1,
-                  transition: "opacity 0.2s",
                 }}>
                   <span style={{
                     fontSize: "12px", fontWeight: 700,
@@ -594,20 +612,16 @@ export default function FichaViewPage() {
             </div>
           </div>
 
-          {/* ── Tormento ── */}
+          {/* Tormento */}
           {tormento && (
             <div style={{
-              background: "rgba(0,10,5,0.6)",
-              border: "1px solid rgba(0,122,81,0.18)",
-              borderRadius: "8px",
-              padding: "24px 32px",
-              backdropFilter: "blur(8px)",
+              background: "rgba(0,10,5,0.6)", border: "1px solid rgba(0,122,81,0.18)",
+              borderRadius: "8px", padding: "24px 32px", backdropFilter: "blur(8px)",
             }}>
               <SectionLabel>Tormento</SectionLabel>
               <p style={{
                 fontSize: "14px", color: "#4a7a5a",
-                lineHeight: 1.75,
-                fontStyle: "italic",
+                lineHeight: 1.75, fontStyle: "italic",
                 borderLeft: "2px solid rgba(0,122,81,0.2)",
                 paddingLeft: "16px",
               }}>
@@ -616,8 +630,7 @@ export default function FichaViewPage() {
             </div>
           )}
 
-        </div>{/* fim coluna central */}
-
+        </div>
       </main>
     </div>
   );
