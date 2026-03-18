@@ -1,17 +1,9 @@
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0a0a0a;
+  --foreground: #ededed;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-html,
-body {
+html, body {
   max-width: 100vw;
   overflow-x: hidden;
 }
@@ -35,8 +27,95 @@ a {
   text-decoration: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
+html { color-scheme: dark; }
+
+/* ─── Utilitários responsivos ─────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .hide-mobile { display: none !important; }
+}
+@media (min-width: 769px) {
+  .hide-desktop { display: none !important; }
+}
+
+/* StepBar labels somem em telas muito pequenas */
+@media (max-width: 500px) {
+  .step-label { display: none !important; }
+  .step-connector { width: 24px !important; }
+}
+
+/* Cards de sistema — coluna em mobile */
+@media (max-width: 540px) {
+  .system-card-available,
+  .system-card-soon {
+    width: 100% !important;
+    height: 180px !important;
   }
+  .system-cards-grid {
+    flex-direction: column !important;
+  }
+}
+
+/* Painel lateral dos steps — row compacto em mobile */
+@media (max-width: 640px) {
+  .step-with-sidebar { flex-direction: column !important; }
+  .step-sidebar { width: 100% !important; position: static !important; }
+}
+
+/* Grid 2 colunas → 1 coluna em mobile pequeno */
+@media (max-width: 440px) {
+  .grid-2-responsive { grid-template-columns: 1fr !important; }
+}
+
+/* Stats da ficha */
+@media (max-width: 600px) {
+  .stat-boxes { flex-wrap: wrap !important; }
+  .stat-boxes > * { min-width: calc(50% - 6px); flex: none !important; }
+  .attr-row { flex-wrap: wrap !important; }
+  .attr-row > * { min-width: calc(50% - 6px); flex: none !important; }
+}
+
+/* Hero da ficha */
+@media (max-width: 520px) {
+  .ficha-hero-inner { flex-direction: column !important; }
+}
+
+/* Cards de fichas menores em mobile */
+@media (max-width: 480px) {
+  .ficha-card-w { width: 145px !important; }
+  .ficha-card-h { height: 185px !important; }
+}
+
+/* Atributos grid — coluna em mobile */
+@media (max-width: 500px) {
+  .attrs-grid { grid-template-columns: 1fr !important; }
+}
+
+/* Nível botões menores em mobile */
+@media (max-width: 380px) {
+  .nivel-btn { width: 32px !important; height: 32px !important; font-size: 12px !important; }
+}
+
+/* ─── AntecedentesStep responsivo ─────────────────────────────────────── */
+/* O div externo do AntecedentesStep usa display:flex com gap:20px         */
+/* Não temos className ali, então usamos seletor de contexto via wizard     */
+
+/* ─── HabilidadesStep responsivo ──────────────────────────────────────── */
+
+/* Painel lateral sticky — colapsa abaixo do conteúdo em mobile */
+@media (max-width: 640px) {
+  /* Qualquer flex row com painel de 168px dentro do wizard */
+  .wizard-main > * > div[style*="168px"],
+  .wizard-main > * > * > div[style*="168px"] {
+    width: 100% !important;
+    position: static !important;
+  }
+}
+
+/* Ficha view responsiva */
+@media (max-width: 600px) {
+  .ficha-view-main { padding: 24px 16px 60px !important; }
+  .ficha-hero { padding: 20px 20px !important; }
+  .ficha-hero h1 { font-size: 24px !important; }
+  .ficha-section { padding: 18px 20px !important; }
 }

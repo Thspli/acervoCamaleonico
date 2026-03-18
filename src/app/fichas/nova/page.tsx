@@ -36,7 +36,7 @@ function AvailableSystemCard({
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       style={{
-        width: "220px", height: "320px", padding: 0,
+        width: "220px", height: "320px", padding: 0, // @className: nova-card-available
         border: `2px solid ${selected ? "#007A51" : hover ? "rgba(0,122,81,0.6)" : "rgba(0,122,81,0.25)"}`,
         borderRadius: "6px", cursor: "pointer",
         position: "relative", overflow: "hidden",
@@ -123,7 +123,7 @@ function ComingSoonCard({ name }: { name: string }) {
   return (
     <div style={{
       width: "220px", height: "320px",
-      border: "2px dashed rgba(0,122,81,0.12)", borderRadius: "6px",
+      border: "2px dashed rgba(0,122,81,0.12)", borderRadius: "6px", // @className: nova-card-soon
       position: "relative", overflow: "hidden",
       background: "rgba(0,8,4,0.5)", flexShrink: 0,
     }}>
@@ -211,7 +211,11 @@ export default function SelecionarSistemaPage() {
 
       <Header />
 
-      <main style={{ flex: 1, position: "relative", zIndex: 1, padding: "48px 60px 80px", display: "flex", flexDirection: "column" }}>
+      <main className="nova-main" style={{ flex: 1, position: "relative", zIndex: 1, padding: "48px 60px 80px", display: "flex", flexDirection: "column" }}>
+      <style>{`
+        @media(max-width:768px){.nova-main{padding:32px 20px 60px!important}}
+        @media(max-width:540px){.nova-cards-grid{flex-direction:column!important}.nova-card-available,.nova-card-soon{width:100%!important;height:200px!important}}
+      `}</style>
 
         {/* Voltar */}
         <button
@@ -246,7 +250,7 @@ export default function SelecionarSistemaPage() {
         </div>
 
         {/* Grade de sistemas */}
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "20px", marginBottom: "48px" }}>
+        <div className="nova-cards-grid" style={{ display: "flex", flexWrap: "wrap", gap: "20px", marginBottom: "48px" }}>
           {AVAILABLE_SYSTEMS.map((s) => (
             <AvailableSystemCard
               key={s.id}
@@ -262,7 +266,7 @@ export default function SelecionarSistemaPage() {
 
         {/* Rodapé */}
         <div style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
+          display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "16px",
           borderTop: "1px solid rgba(0,122,81,0.15)", paddingTop: "28px", marginTop: "auto",
         }}>
           <div style={{ fontSize: "13px", color: "#2d4a35", fontStyle: "italic" }}>

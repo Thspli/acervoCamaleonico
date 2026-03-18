@@ -422,30 +422,36 @@ export function AttributesStep({ values, onChange }: AttributesStepProps) {
   const remaining = TOTAL_POINTS - spent;
 
   return (
-    <div style={{ display: "flex", gap: "20px", alignItems: "flex-start" }}>
-      {/* Grid 2×2 */}
-      <div style={{
-        flex: 1,
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: "14px",
-      }}>
-        {ATTRS.map(cfg => (
-          <AttrCard
-            key={cfg.id}
-            cfg={cfg}
-            value={values[cfg.id] ?? 0}
-            canIncrease={remaining > 0}
-            onIncrement={() => onChange(cfg.id, (values[cfg.id] ?? 0) + 1)}
-            onDecrement={() => onChange(cfg.id, (values[cfg.id] ?? 0) - 1)}
-          />
-        ))}
+    <>
+      <style>{`
+        .attrs-outer{display:flex;gap:20px;align-items:flex-start}
+        .attrs-grid{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+        .attrs-panel{width:160px;flex-shrink:0}
+        @media(max-width:640px){
+          .attrs-outer{flex-direction:column!important}
+          .attrs-panel{width:100%!important}
+        }
+        @media(max-width:440px){
+          .attrs-grid{grid-template-columns:1fr!important}
+        }
+      `}</style>
+      <div className="attrs-outer">
+        <div className="attrs-grid">
+          {ATTRS.map(cfg => (
+            <AttrCard
+              key={cfg.id}
+              cfg={cfg}
+              value={values[cfg.id] ?? 0}
+              canIncrease={remaining > 0}
+              onIncrement={() => onChange(cfg.id, (values[cfg.id] ?? 0) + 1)}
+              onDecrement={() => onChange(cfg.id, (values[cfg.id] ?? 0) - 1)}
+            />
+          ))}
+        </div>
+        <div className="attrs-panel">
+          <Summary values={values} />
+        </div>
       </div>
-
-      {/* Painel lateral */}
-      <div style={{ width: "160px", flexShrink: 0 }}>
-        <Summary values={values} />
-      </div>
-    </div>
+    </>
   );
 }

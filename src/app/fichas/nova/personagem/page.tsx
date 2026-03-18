@@ -35,7 +35,7 @@ function StepBar({
             {/* Linha conectora */}
             {i > 0 && (
               <div style={{
-                width: "64px", height: "1px",
+                width: "64px", height: "1px", // connector
                 background: done || active
                   ? "linear-gradient(90deg, #007A51, rgba(0,122,81,0.3))"
                   : "rgba(0,122,81,0.1)",
@@ -143,7 +143,7 @@ function StepCard({ children }: { children: React.ReactNode }) {
       border: "1px solid rgba(0,122,81,0.18)",
       borderRadius: "8px",
       padding: "36px 40px",
-      backdropFilter: "blur(10px)",
+      backdropFilter: "blur(10px)", // @step-card
       position: "relative",
       overflow: "hidden",
     }}>
@@ -237,7 +237,7 @@ function PersonagemStep({
 
         {/* ── Identidade ── */}
         <FieldGroup label="Identidade">
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px 20px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px 20px" }} className="personagem-grid">
             {/* Nome do Personagem */}
             <div>
               {label("Nome do Personagem", true)}
@@ -269,7 +269,7 @@ function PersonagemStep({
             {/* Nível — coluna inteira por clareza */}
             <div style={{ gridColumn: "span 2" }}>
               {label("Nível")}
-              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }} className="nivel-btns">
                 {/* Botões −/+ */}
                 {[1,2,3,4,5,6].map(n => {
                   const active = Number(get("nivel") || 1) === n;
@@ -303,7 +303,7 @@ function PersonagemStep({
 
         {/* ── Recursos ── */}
         <FieldGroup label="Recursos">
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px 20px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px 20px" }} className="personagem-grid">
             {/* Dinheiro */}
             <div>
               {label("Dinheiro")}
@@ -503,7 +503,25 @@ export default function PersonagemPage() {
         flex: 1, position: "relative", zIndex: 1,
         maxWidth: "740px", margin: "0 auto", width: "100%",
         padding: "0 40px 80px",
-      }}>
+      }} className="wizard-main">
+        <style>{`
+          @media(max-width:640px){
+            .wizard-main{padding:0 16px 60px!important}
+            .step-connector{width:32px!important}
+            .step-label{font-size:8px!important}
+            .personagem-grid{grid-template-columns:1fr!important}
+            .nivel-btns{gap:6px!important}
+            .step-card{padding:24px 20px!important}
+          }
+          @media(max-width:480px){
+            .step-connector{width:20px!important}
+            .step-label{display:none!important}
+          }
+          @media(max-width:640px){
+            .attrs-side-panel,.antes-side-panel,.hab-side-panel{width:100%!important;position:static!important}
+            .attrs-flex,.antes-flex,.hab-flex{flex-direction:column!important}
+          }
+        `}</style>
 
         {/* Barra de passos */}
         <StepBar current={currentStep.order} steps={steps} />
@@ -534,10 +552,12 @@ export default function PersonagemPage() {
             onChange={onChange}
           />
         ) : currentStep.id === "attributes" ? (
-          <AttributesStep
+          <div className="attrs-flex" style={{display:"flex",gap:"20px",alignItems:"flex-start",flexWrap:"wrap"}}>
+            <AttributesStep
             values={stepData as Record<string, number>}
             onChange={onChange}
           />
+          </div>
         ) : currentStep.id === "antecedentes" ? (
           <AntecedentesStep
             values={stepData as Record<string, number>}
