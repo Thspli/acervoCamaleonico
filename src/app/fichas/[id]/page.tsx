@@ -88,15 +88,6 @@ const ATTR_META = [
   { id:"coragem",   label:"Coragem",   color:"#8e44ad", max:5 },
 ];
 
-// Posições dos círculos do revólver na imagem (% do card)
-// Baseado na imagem atributosSS.png: 4 círculos ao redor de um central
-const ATTR_POSITIONS: Record<string, { top: string; left: string }> = {
-  intelecto: { top: "18%",  left: "52%" }, // topo
-  agilidade: { top: "42%",  left: "22%" }, // esquerda
-  coragem:   { top: "42%",  left: "78%" }, // direita
-  fisico:    { top: "68%",  left: "52%" }, // baixo
-};
-
 type Tab = "combate" | "habilidades" | "equipamentos";
 
 // ─── Dot clicável ─────────────────────────────────────────────────────────────
@@ -112,7 +103,6 @@ function ClickableDots({
         const filled  = i < value;
         const locked  = i >= maxAllowed;
         const isNext  = i === value && !locked;
-        const isLast  = i === value - 1 && filled;
 
         return (
           <div
@@ -120,8 +110,8 @@ function ClickableDots({
             title={locked ? `Máx. ${maxAllowed} neste nível` : filled ? "Clique para diminuir" : "Clique para aumentar"}
             onClick={() => {
               if (locked) return;
-              if (filled) onChange(Math.max(0, value - 1));    // diminui
-              else if (isNext) onChange(Math.min(maxAllowed, value + 1)); // aumenta
+              if (filled) onChange(Math.max(0, value - 1));
+              else if (isNext) onChange(Math.min(maxAllowed, value + 1));
             }}
             style={{
               width:  locked ? 8 : 12, height: locked ? 8 : 12,
@@ -179,84 +169,11 @@ function ImgCard({ img, title, children, minH = 280 }: {
   );
 }
 
-
 // ─── Overlay num círculo do revólver ─────────────────────────────────────────
 function AttrCircleOverlay({
-  label, color, value, onChange, top, left,
+  color, value, onChange, top, left,
 }: {
-  label: string; color: string;
-  value: number; onChange: (v: number) => void;
-  top: string; left: string;
-}) {
-  const MAX = 2;
-  return (
-    <div style={{
-      position:"absolute", top, left,
-      transform:"translate(-50%,-50%)",
-      zIndex:4,
-      display:"flex", flexDirection:"column",
-      alignItems:"center", gap:"4px",
-      pointerEvents:"all",
-    }}>
-      {/* Número grande */}
-      <span style={{
-        fontSize:"36px", fontWeight:700,
-        color: value > 0 ? color : "rgba(255,255,255,0.25)",
-        fontFamily:"var(--font-museo),sans-serif",
-        lineHeight:1,
-        textShadow: value > 0
-          ? `0 0 16px ${color}cc, 0 2px 6px rgba(0,0,0,1)`
-          : "0 2px 6px rgba(0,0,0,0.9)",
-        transition:"all 0.2s",
-      }}>{value}</span>
-
-      {/* Botões − + compactos */}
-      <div style={{ display:"flex", gap:"4px", alignItems:"center" }}>
-        <button onClick={() => onChange(Math.max(0,value-1))} disabled={value===0}
-          style={{ width:20, height:20, borderRadius:"4px", background:"rgba(0,0,0,0.75)", border:`1px solid ${value>0?color+"70":"rgba(255,255,255,0.12)"}`, color:value>0?color:"rgba(255,255,255,0.2)", cursor:value>0?"pointer":"default", fontSize:"14px", lineHeight:1, display:"flex", alignItems:"center", justifyContent:"center", padding:0, transition:"all 0.15s", backdropFilter:"blur(4px)" }}>−</button>
-        <button onClick={() => onChange(Math.min(MAX,value+1))} disabled={value>=MAX}
-          style={{ width:20, height:20, borderRadius:"4px", background:"rgba(0,0,0,0.75)", border:`1px solid ${value<MAX?color+"70":"rgba(255,255,255,0.12)"}`, color:value<MAX?color:"rgba(255,255,255,0.2)", cursor:value<MAX?"pointer":"default", fontSize:"14px", lineHeight:1, display:"flex", alignItems:"center", justifyContent:"center", padding:0, transition:"all 0.15s", backdropFilter:"blur(4px)" }}>+</button>
-      </div>
-    </div>
-  );
-}
-
-// ─── Título de seção ──────────────────────────────────────────────────────────
-function SectionTitle({ children }: { children: React.ReactNode }) {
-  return (
-    <div style={{ display:"flex", alignItems:"center", gap:"14px", marginBottom:"24px" }}>
-      <span style={{ fontSize:"10px", fontWeight:700, color:"#007A51", letterSpacing:"0.25em", textTransform:"uppercase", fontFamily:"var(--font-museo), sans-serif" }}>
-        {children}
-      </span>
-      <div style={{ flex:1, height:"1px", background:"linear-gradient(90deg, rgba(0,122,81,0.3), transparent)" }} />
-    </div>
-  );
-}
-
-// ─── Card com imagem de fundo ─────────────────────────────────────────────────
-function ImgCard({ img, title, children, minH = 280 }: {
-  img: string; title: string; children: React.ReactNode; minH?: number;
-}) {
-  return (
-    <div style={{ position:"relative", borderRadius:"8px", overflow:"hidden", border:"1px solid rgba(0,122,81,0.2)", minHeight:minH }}>
-      <div style={{ position:"absolute", inset:0, backgroundImage:`url('/${img}')`, backgroundSize:"cover", backgroundPosition:"center", opacity:0.4 }} />
-      <div style={{ position:"absolute", inset:0, background:"linear-gradient(to bottom, rgba(0,5,2,0.35) 0%, rgba(0,5,2,0.78) 100%)" }} />
-      <div style={{ position:"relative", zIndex:1, padding:"18px 20px", height:"100%", display:"flex", flexDirection:"column" }}>
-        <p style={{ fontSize:"9px", fontWeight:700, color:"#007A51", letterSpacing:"0.2em", textTransform:"uppercase", marginBottom:"14px", fontFamily:"var(--font-museo), sans-serif" }}>
-          {title}
-        </p>
-        {children}
-      </div>
-    </div>
-  );
-}
-
-
-// ─── Overlay num círculo do revólver ─────────────────────────────────────────
-function AttrCircleOverlay({
-  attrId, label, color, value, onChange, top, left,
-}: {
-  label: string; color: string;
+  color: string;
   value: number; onChange: (v: number) => void;
   top: string; left: string;
 }) {
@@ -268,72 +185,42 @@ function AttrCircleOverlay({
       transform: "translate(-50%, -50%)",
       zIndex: 3,
       display: "flex", flexDirection: "column",
-      alignItems: "center", gap: "5px",
+      alignItems: "center", gap: "3px",
     }}>
-      {/* Controles + número */}
-      <div style={{ display:"flex", alignItems:"center", gap:"8px" }}>
-        <button
-          onClick={() => onChange(Math.max(0, value - 1))}
-          disabled={value === 0}
+      <span style={{
+        fontSize: "28px", fontWeight: 700,
+        color: value > 0 ? color : "rgba(255,255,255,0.3)",
+        fontFamily: "var(--font-museo), sans-serif",
+        lineHeight: 1,
+        textShadow: value > 0
+          ? `0 0 14px ${color}, 0 2px 5px rgba(0,0,0,1)`
+          : "0 2px 5px rgba(0,0,0,0.9)",
+        transition: "all 0.2s",
+      }}>{value}</span>
+
+      <div style={{ display:"flex", gap:"4px", alignItems:"center" }}>
+        <button onClick={() => onChange(Math.max(0, value - 1))} disabled={value === 0}
           style={{
-            width:28, height:28, borderRadius:"50%",
-            background: value > 0 ? `${color}22` : "rgba(0,0,0,0.5)",
-            border: `2px solid ${value > 0 ? color + "80" : "rgba(255,255,255,0.15)"}`,
-            color: value > 0 ? color : "rgba(255,255,255,0.25)",
+            width:18, height:18, borderRadius:"3px",
+            background:"rgba(0,0,0,0.85)",
+            border:`1px solid ${value > 0 ? color + "90" : "rgba(255,255,255,0.1)"}`,
+            color: value > 0 ? color : "rgba(255,255,255,0.15)",
             cursor: value > 0 ? "pointer" : "default",
-            fontSize:"16px", lineHeight:1,
+            fontSize:"13px", lineHeight:1,
             display:"flex", alignItems:"center", justifyContent:"center",
-            padding:0, transition:"all 0.15s",
-            backdropFilter:"blur(4px)",
-          }}
-        >−</button>
-
-        <span style={{
-          fontSize: "42px", fontWeight: 700,
-          color: value > 0 ? color : "rgba(255,255,255,0.2)",
-          fontFamily: "var(--font-museo), sans-serif",
-          lineHeight: 1,
-          textShadow: value > 0
-            ? `0 0 20px ${color}, 0 2px 8px rgba(0,0,0,0.9)`
-            : "0 2px 8px rgba(0,0,0,0.8)",
-          transition: "all 0.2s",
-          minWidth: "32px", textAlign: "center",
-        }}>
-          {value}
-        </span>
-
-        <button
-          onClick={() => onChange(Math.min(MAX, value + 1))}
-          disabled={value >= MAX}
+            padding:0,
+          }}>−</button>
+        <button onClick={() => onChange(Math.min(MAX, value + 1))} disabled={value >= MAX}
           style={{
-            width:28, height:28, borderRadius:"50%",
-            background: value < MAX ? `${color}22` : "rgba(0,0,0,0.5)",
-            border: `2px solid ${value < MAX ? color + "80" : "rgba(255,255,255,0.15)"}`,
-            color: value < MAX ? color : "rgba(255,255,255,0.25)",
+            width:18, height:18, borderRadius:"3px",
+            background:"rgba(0,0,0,0.85)",
+            border:`1px solid ${value < MAX ? color + "90" : "rgba(255,255,255,0.1)"}`,
+            color: value < MAX ? color : "rgba(255,255,255,0.15)",
             cursor: value < MAX ? "pointer" : "default",
-            fontSize:"16px", lineHeight:1,
+            fontSize:"13px", lineHeight:1,
             display:"flex", alignItems:"center", justifyContent:"center",
-            padding:0, transition:"all 0.15s",
-            backdropFilter:"blur(4px)",
-          }}
-        >+</button>
-      </div>
-
-      {/* Label com fundo para legibilidade */}
-      <div style={{
-        background:"rgba(0,0,0,0.65)",
-        backdropFilter:"blur(6px)",
-        border:`1px solid ${value > 0 ? color + "50" : "rgba(255,255,255,0.1)"}`,
-        borderRadius:"20px",
-        padding:"3px 12px",
-      }}>
-        <span style={{
-          fontSize: "10px", fontWeight: 700,
-          color: value > 0 ? color : "rgba(255,255,255,0.35)",
-          letterSpacing: "0.12em", textTransform: "uppercase",
-          fontFamily: "var(--font-museo), sans-serif",
-          transition: "color 0.15s",
-        }}>{label}</span>
+            padding:0,
+          }}>+</button>
       </div>
     </div>
   );
@@ -351,7 +238,6 @@ export default function FichaViewPage() {
   const [saved,     setSaved]     = useState(false);
   const [expandedAnte, setExpandedAnte] = useState<string | null>(null);
 
-  // Valores mutáveis
   const [attrs, setAttrs] = useState<Record<string,number>>({
     fisico:0, agilidade:0, intelecto:0, coragem:0,
   });
@@ -364,7 +250,6 @@ export default function FichaViewPage() {
     try { const s = localStorage.getItem(`avatar_${id}`); if (s) setAvatar(s); } catch {}
   }, [id]);
 
-  // Popula estado local quando a ficha carrega
   useEffect(() => {
     if (!ficha) return;
     const cd = ficha.data;
@@ -381,7 +266,6 @@ export default function FichaViewPage() {
     setAntecedentes(before);
   }, [ficha]);
 
-  // Auto-save: persiste attrs e antecedentes de volta na ficha
   const autoSave = useCallback((
     newAttrs: Record<string,number>,
     newAntes: Record<string,number>,
@@ -433,7 +317,6 @@ export default function FichaViewPage() {
     if (id) try { localStorage.removeItem(`avatar_${id}`); } catch {}
   };
 
-  // ── Loading / not found ──
   if (ficha === undefined) {
     return (
       <div style={{ minHeight:"100vh", background:"#070a08", color:"#c8e6c9", fontFamily:"var(--font-museo), sans-serif", display:"flex", flexDirection:"column" }}>
@@ -493,7 +376,6 @@ export default function FichaViewPage() {
         .fv-vida  { font-size:64px; }
         .tab-btn  { transition:all 0.2s; }
         .tab-btn:hover { background:rgba(0,122,81,0.1) !important; }
-        .attr-dot-btn:hover { filter:brightness(1.3); }
         .save-toast {
           position:fixed; bottom:28px; right:28px;
           background:rgba(0,122,81,0.18); border:1px solid rgba(0,122,81,0.4);
@@ -520,7 +402,6 @@ export default function FichaViewPage() {
         }
       `}</style>
 
-      {/* Toast de auto-save */}
       {saved && (
         <div className="save-toast">
           <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -544,7 +425,6 @@ export default function FichaViewPage() {
           </button>
 
           <div className="fv-hero-row" style={{ display:"flex", alignItems:"flex-end", justifyContent:"space-between", gap:"32px", flexWrap:"wrap", paddingBottom:"28px", borderBottom:"1px solid rgba(0,122,81,0.12)" }}>
-            {/* Avatar + texto */}
             <div style={{ display:"flex", alignItems:"flex-end", gap:"24px", flex:1, minWidth:0 }}>
               {/* Avatar */}
               <div style={{ position:"relative", flexShrink:0 }}>
@@ -667,34 +547,28 @@ export default function FichaViewPage() {
                       <div style={{ position:"absolute", inset:0, backgroundImage:"url('/atributosSS.png')", backgroundSize:"contain", backgroundPosition:"center", backgroundRepeat:"no-repeat", opacity:0.8 }} />
                       <div style={{ position:"absolute", inset:0, background:"radial-gradient(ellipse at center, rgba(0,0,0,0.05) 40%, rgba(0,5,2,0.5) 100%)" }} />
 
-                      {/* Label */}
                       <div style={{ position:"absolute", top:14, left:16, zIndex:2 }}>
                         <span style={{ fontSize:"9px", fontWeight:700, color:"#007A51", letterSpacing:"0.25em", textTransform:"uppercase", fontFamily:"var(--font-museo),sans-serif" }}>Atributos</span>
                       </div>
 
-                      {/* INT — círculo topo-centro */}
-                      <AttrCircleOverlay label="Intelecto" color="#2980b9"
+                      <AttrCircleOverlay color="#2980b9"
                         value={attrs.intelecto ?? 0} onChange={v => setAttr("intelecto", v)}
-                        top="21%" left="50%" />
-                      {/* AGI — círculo meio-esquerda */}
-                      <AttrCircleOverlay label="Agilidade" color="#d4a017"
+                        top="17%" left="50%" />
+                      <AttrCircleOverlay color="#d4a017"
                         value={attrs.agilidade ?? 0} onChange={v => setAttr("agilidade", v)}
-                        top="48%" left="24%" />
-                      {/* COR — círculo meio-direita */}
-                      <AttrCircleOverlay label="Coragem" color="#8e44ad"
+                        top="44%" left="27%" />
+                      <AttrCircleOverlay color="#8e44ad"
                         value={attrs.coragem ?? 0} onChange={v => setAttr("coragem", v)}
-                        top="48%" left="76%" />
-                      {/* FIS — círculo baixo-esquerda */}
-                      <AttrCircleOverlay label="Físico" color="#c0392b"
+                        top="44%" left="73%" />
+                      <AttrCircleOverlay color="#c0392b"
                         value={attrs.fisico ?? 0} onChange={v => setAttr("fisico", v)}
-                        top="75%" left="30%" />
+                        top="70%" left="27%" />
                     </div>
                   </div>
                 </div>
 
-                {/* Stats: Ações + Defesa + Vida */}
+                {/* Stats */}
                 <div className="stats-row">
-                  {/* Ações */}
                   <div style={{ flex:1, position:"relative", borderRadius:"8px", overflow:"hidden", border:"1px solid rgba(0,122,81,0.2)", minHeight:130 }}>
                     <div style={{ position:"absolute", inset:0, backgroundImage:"url('/acoesSS.png')", backgroundSize:"cover", backgroundPosition:"center", opacity:0.4 }} />
                     <div style={{ position:"absolute", inset:0, background:"rgba(0,5,2,0.55)" }} />
@@ -707,7 +581,6 @@ export default function FichaViewPage() {
                     </div>
                   </div>
 
-                  {/* Defesa */}
                   <div style={{ flex:1, position:"relative", borderRadius:"8px", overflow:"hidden", border:"1px solid rgba(212,160,23,0.25)", minHeight:130 }}>
                     <div style={{ position:"absolute", inset:0, backgroundImage:"url('/defesaSS.png')", backgroundSize:"cover", backgroundPosition:"center", opacity:0.45 }} />
                     <div style={{ position:"absolute", inset:0, background:"rgba(0,5,2,0.55)" }} />
@@ -720,7 +593,6 @@ export default function FichaViewPage() {
                     </div>
                   </div>
 
-                  {/* Iniciativa */}
                   <div style={{ flex:1, borderRadius:"8px", border:"1px solid rgba(142,68,173,0.25)", background:"rgba(0,5,2,0.7)", minHeight:130, padding:"14px 16px", display:"flex", flexDirection:"column", justifyContent:"space-between" }}>
                     <span style={{ fontSize:"9px", fontWeight:700, color:"#8e44ad", letterSpacing:"0.2em", textTransform:"uppercase", fontFamily:"var(--font-museo),sans-serif" }}>Iniciativa</span>
                     <div>
@@ -729,7 +601,6 @@ export default function FichaViewPage() {
                     </div>
                   </div>
 
-                  {/* Vida */}
                   <div style={{ flex:1, borderRadius:"8px", border:"1px solid rgba(192,57,43,0.25)", background:"rgba(0,5,2,0.7)", minHeight:130, padding:"14px 16px", display:"flex", flexDirection:"column", justifyContent:"space-between" }}>
                     <span style={{ fontSize:"9px", fontWeight:700, color:"#c0392b", letterSpacing:"0.2em", textTransform:"uppercase", fontFamily:"var(--font-museo),sans-serif" }}>Vida</span>
                     <div>
@@ -761,9 +632,8 @@ export default function FichaViewPage() {
                 )}
               </div>
 
-              {/* ══ COLUNA DIREITA — antecedentes com expansão ══ */}
-              <div className="combate-right" style={{ position:"sticky", top:"88px", position:"relative" } as any}>
-                {/* Divisor vertical */}
+              {/* ══ COLUNA DIREITA — antecedentes ══ */}
+              <div className="combate-right" style={{ position:"sticky", top:"88px" } as any}>
                 <div style={{ position:"absolute", left:0, top:0, bottom:0, width:"1px", background:"linear-gradient(to bottom, transparent, rgba(0,122,81,0.3) 20%, rgba(0,122,81,0.3) 80%, transparent)" }} />
 
                 <p style={{ fontSize:"9px", fontWeight:700, color:"#007A51", letterSpacing:"0.25em", textTransform:"uppercase", fontFamily:"var(--font-museo),sans-serif", marginBottom:"16px", paddingLeft:"20px" }}>Antecedentes</p>
@@ -773,9 +643,7 @@ export default function FichaViewPage() {
                     const expanded = expandedAnte === antId;
                     return (
                       <div key={antId} style={{ borderRadius:"6px", overflow:"hidden", border:`1px solid ${expanded ? color+"50" : value>0 ? color+"25" : "rgba(0,122,81,0.08)"}`, borderLeft:`3px solid ${value>0?color:"rgba(0,122,81,0.15)"}`, background:expanded?"rgba(0,8,4,0.95)":value>0?"rgba(0,10,5,0.82)":"rgba(0,5,2,0.4)", transition:"all 0.2s", opacity:value===0&&!expanded?0.5:1 }}>
-                        {/* Linha principal */}
                         <div style={{ display:"flex", alignItems:"center", gap:"8px", padding:"10px 12px" }}>
-                          {/* Nome clicável */}
                           <button onClick={() => setExpandedAnte(expanded ? null : antId)}
                             style={{ flex:1, background:"none", border:"none", cursor:"pointer", textAlign:"left", padding:0, display:"flex", alignItems:"center", gap:"8px" }}>
                             <span style={{ fontSize:"12px", fontWeight:700, color:value>0?"#c8e6c9":"#2d4a35", fontFamily:"var(--font-museo),sans-serif", transition:"color 0.2s" }}>{label}</span>
@@ -788,7 +656,6 @@ export default function FichaViewPage() {
                           <span style={{ fontSize:"15px", fontWeight:700, color:value>0?color:"#2d4a35", fontFamily:"var(--font-museo),sans-serif", minWidth:"14px", textAlign:"right", marginLeft:"4px" }}>{value}</span>
                         </div>
 
-                        {/* Descrição expansível */}
                         <div style={{ maxHeight:expanded?"200px":"0", overflow:"hidden", transition:"max-height 0.3s cubic-bezier(0.4,0,0.2,1)" }}>
                           <div style={{ padding:"0 12px 12px 12px", borderTop:`1px solid ${color}20` }}>
                             <div style={{ width:"100%", height:"1px", marginBottom:"10px" }} />
