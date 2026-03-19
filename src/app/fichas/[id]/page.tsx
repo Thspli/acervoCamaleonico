@@ -553,16 +553,16 @@ export default function FichaViewPage() {
 
                       <AttrCircleOverlay color="#2980b9"
                         value={attrs.intelecto ?? 0} onChange={v => setAttr("intelecto", v)}
-                        top="17%" left="50%" />
+                        top="24%" left="50%" />
                       <AttrCircleOverlay color="#d4a017"
                         value={attrs.agilidade ?? 0} onChange={v => setAttr("agilidade", v)}
-                        top="44%" left="27%" />
+                        top="37%" left="29%" />
                       <AttrCircleOverlay color="#8e44ad"
                         value={attrs.coragem ?? 0} onChange={v => setAttr("coragem", v)}
-                        top="44%" left="73%" />
+                        top="37%" left="71%" />
                       <AttrCircleOverlay color="#c0392b"
                         value={attrs.fisico ?? 0} onChange={v => setAttr("fisico", v)}
-                        top="70%" left="27%" />
+                        top="62%" left="29%" />
                     </div>
                   </div>
                 </div>
