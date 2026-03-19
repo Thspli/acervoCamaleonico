@@ -416,7 +416,7 @@ export default function FichaViewPage() {
 
       {/* ══ HERO ══ */}
       <div style={{ position:"relative", zIndex:1 }}>
-        <div style={{ maxWidth:"960px", margin:"0 auto", width:"100%" }} className="fv-hero">
+        <div style={{ maxWidth:"1400px", margin:"0 auto", width:"100%" }} className="fv-hero">
           <button onClick={() => router.push("/fichas")} style={{ background:"none", border:"none", color:"#4a7a5a", cursor:"pointer", display:"flex", alignItems:"center", gap:"6px", fontSize:"12px", fontFamily:"var(--font-museo),sans-serif", marginBottom:"28px", padding:0, transition:"color 0.2s" }}
             onMouseEnter={e=>(e.currentTarget.style.color="#81c784")}
             onMouseLeave={e=>(e.currentTarget.style.color="#4a7a5a")}>
@@ -505,7 +505,7 @@ export default function FichaViewPage() {
 
       {/* ══ TABS ══ */}
       <div style={{ position:"relative", zIndex:1, borderBottom:"1px solid rgba(0,122,81,0.12)" }}>
-        <div style={{ maxWidth:"960px", margin:"0 auto", width:"100%", display:"flex", gap:"2px" }} className="fv-tabs">
+        <div style={{ maxWidth:"1400px", margin:"0 auto", width:"100%", display:"flex", gap:"2px" }} className="fv-tabs">
           {TABS.map(tab => {
             const active = activeTab === tab.id;
             return (
@@ -519,7 +519,7 @@ export default function FichaViewPage() {
 
       {/* ══ CONTEÚDO ══ */}
       <main style={{ flex:1, position:"relative", zIndex:1 }}>
-        <div style={{ maxWidth:"960px", margin:"0 auto", width:"100%" }} className="fv-main">
+        <div style={{ maxWidth:"1400px", margin:"0 auto", width:"100%" }} className="fv-main">
 
           {/* ── TAB: COMBATE ── */}
           {activeTab === "combate" && (
